@@ -48,375 +48,491 @@ $pending_loans = $stmt->fetchAll();
             --info-color: #36b9cc;
             --warning-color: #f6c23e;
             --danger-color: #e74a3b;
+            --dark-color: #2c3e50;
+            --light-color: #f8f9fc;
         }
         
         body {
-            background-color: #f8f9fc;
+            background-color: var(--light-color);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
-        .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(180deg, var(--primary-color) 0%, #224abe 100%);
-            color: white;
+        /* Modern Navbar Styles */
+        .navbar {
+            background: linear-gradient(135deg, var(--dark-color) 0%, #1a252f 100%);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             position: fixed;
-            width: 250px;
-            transition: all 0.3s;
+            top: 0;
+            left: 0;
+            right: 0;
             z-index: 1000;
         }
         
-        .sidebar .nav-link {
-            color: rgba(255,255,255,.8);
-            padding: 1rem 1.5rem;
-            font-size: 0.95rem;
-            border-radius: 0.35rem;
-            margin: 0.2rem 1rem;
-            transition: all 0.3s;
+        .navbar-brand {
+            color: white !important;
+            font-weight: 600;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        .sidebar .nav-link:hover {
+        .navbar-brand i {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8) !important;
+            padding: 0.5rem 1rem;
+            margin: 0 0.2rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .nav-link:hover {
+            color: white !important;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link.active {
+            color: white !important;
+            background: var(--primary-color);
+            box-shadow: 0 4px 15px rgba(78,115,223,0.3);
+        }
+        
+        .nav-link i {
+            font-size: 1.2rem;
+        }
+        
+        .navbar-toggler {
+            border: none;
+            padding: 0.5rem;
             color: white;
-            background: rgba(255,255,255,.1);
         }
         
-        .sidebar .nav-link.active {
-            color: white;
-            background: rgba(255,255,255,.15);
-        }
-        
-        .sidebar .nav-link i {
-            margin-right: 0.5rem;
-            width: 1.5rem;
-            text-align: center;
+        .navbar-toggler:focus {
+            box-shadow: none;
         }
         
         .main-content {
-            margin-left: 250px;
-            padding: 1.5rem;
-            transition: all 0.3s;
+            margin-top: 80px;
+            padding: 2rem;
         }
         
+        /* Card Styles */
         .card {
             border: none;
-            border-radius: 0.75rem;
+            border-radius: 1rem;
             box-shadow: 0 0.15rem 1.75rem rgba(0, 0, 0, 0.1);
             margin-bottom: 1.5rem;
             transition: all 0.3s;
+            background: white;
+            overflow: hidden;
         }
         
         .card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-5px);
             box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.15);
         }
         
-        .stat-card {
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .stat-card.users { background: linear-gradient(45deg, #4e73df, #6f42c1); }
-        .stat-card.accounts { background: linear-gradient(45deg, #1cc88a, #20c997); }
-        .stat-card.loans { background: linear-gradient(45deg, #36b9cc, #0dcaf0); }
-        .stat-card.balance { background: linear-gradient(45deg, #f6c23e, #fd7e14); }
-        
-        .stat-card .card-body {
-            padding: 1.75rem;
-            color: white;
-            z-index: 1;
-            position: relative;
-        }
-        
-        .stat-card .stat-icon {
-            font-size: 3rem;
-            opacity: 0.3;
-            position: absolute;
-            right: 1rem;
-            bottom: 1rem;
-        }
-        
-        .stat-card .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-card .stat-label {
-            font-size: 0.9rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-        
         .card-header {
-            background-color: transparent;
-            border-bottom: 1px solid rgba(0,0,0,.05);
+            background: linear-gradient(45deg, var(--primary-color), #6f42c1);
+            color: white;
             padding: 1.25rem 1.5rem;
+            border: none;
         }
         
         .card-header h5 {
-            color: var(--primary-color);
+            color: white;
             font-weight: 600;
+            margin: 0;
         }
         
+        /* Table Styles */
         .table {
             margin-bottom: 0;
         }
         
         .table thead th {
-            border-top: none;
-            border-bottom-width: 1px;
+            background: rgba(78,115,223,0.05);
+            border-bottom: 2px solid rgba(78,115,223,0.1);
+            color: var(--primary-color);
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.8rem;
-            color: var(--secondary-color);
             letter-spacing: 0.05em;
+            padding: 1rem;
         }
         
         .table td {
             vertical-align: middle;
             color: #5a5c69;
             font-size: 0.9rem;
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
+        .table tr:hover {
+            background: rgba(78,115,223,0.02);
+        }
+        
+        /* Button Styles */
+        .btn {
+            border-radius: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #6f42c1);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #6f42c1, var(--primary-color));
+        }
+        
+        /* Form Styles */
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            border: 2px solid #e1e1e1;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(78,115,223,0.25);
+        }
+        
+        /* Status Badge Styles */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
             font-size: 0.875rem;
-            border-radius: 0.35rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
-        .welcome-section {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 0.15rem 1.75rem rgba(0, 0, 0, 0.05);
+        .status-badge i {
+            font-size: 1rem;
+        }
+        
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        /* Alert Styles */
+        .alert {
+            border-radius: 0.5rem;
+            border: none;
+            padding: 1rem 1.5rem;
             margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         
-        .welcome-section .text-muted {
-            color: var(--secondary-color) !important;
+        .alert i {
+            font-size: 1.25rem;
+        }
+        
+        .alert-danger {
+            background: #fff5f5;
+            color: var(--danger-color);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .alert-success {
+            background: #f0fff4;
+            color: var(--success-color);
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .alert-info {
+            background: #e8f4f8;
+            color: var(--info-color);
+            border-left: 4px solid var(--info-color);
+        }
+        
+        /* Avatar Styles */
+        .avatar {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(78,115,223,0.1);
+            color: var(--primary-color);
+            font-weight: 600;
         }
         
         @media (max-width: 768px) {
-            .sidebar {
-                width: 100%;
-                position: relative;
-                min-height: auto;
+            .navbar {
+                padding: 0.75rem 1rem;
             }
+            
             .main-content {
-                margin-left: 0;
+                margin-top: 60px;
+                padding: 1rem;
+            }
+            
+            .nav-link {
+                padding: 0.75rem 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid p-0">
-        <div class="row g-0">
-            <!-- Sidebar -->
-            <div class="col-auto">
-                <div class="sidebar">
-                    <div class="p-4">
-                        <h4 class="mb-0">Admin Panel</h4>
+    <!-- Modern Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.php">
+                <i class="bi bi-bank"></i>
+                Admin Panel
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.php">
+                            <i class="bi bi-speedometer2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="users.php">
+                            <i class="bi bi-people"></i>
+                            Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="accounts.php">
+                            <i class="bi bi-bank"></i>
+                            Accounts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="transactions.php">
+                            <i class="bi bi-cash"></i>
+                            Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="loans.php">
+                            <i class="bi bi-credit-card"></i>
+                            Loans
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.php">
+                            <i class="bi bi-person"></i>
+                            Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="logout.php">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row">
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Total Users</h6>
+                                <h3 class="mb-0"><?php echo number_format($stats['total_users']); ?></h3>
+                            </div>
+                            <div class="avatar">
+                                <i class="bi bi-people"></i>
+                            </div>
+                        </div>
                     </div>
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="index.php">
-                                <i class="bi bi-speedometer2"></i> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="users.php">
-                                <i class="bi bi-people"></i> Users
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="accounts.php">
-                                <i class="bi bi-wallet2"></i> Accounts
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="loans.php">
-                                <i class="bi bi-bank"></i> Loans
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="create_admin.php">
-                                <i class="bi bi-person-plus"></i> Create Admin
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="transactions.php">
-                                <i class="bi bi-cash"></i> Transactions
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="profile.php">
-                                <i class="bi bi-person-circle"></i> My Profile
-                            </a>
-                        </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link text-danger" href="logout.php">
-                                <i class="bi bi-box-arrow-right"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
                 </div>
             </div>
             
-            <!-- Main Content -->
-            <div class="col">
-                <div class="main-content">
-                    <div class="welcome-section d-flex justify-content-between align-items-center">
-                        <h2 class="mb-0">Dashboard</h2>
-                        <div>
-                            <span class="text-muted">
-                                Welcome back, <strong><?php echo htmlspecialchars($_SESSION['admin_username']); ?></strong>
-                                <small class="ms-2 text-secondary">(ID: <?php echo $_SESSION['admin_id']; ?>)</small>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <!-- Statistics -->
-                    <div class="row">
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card stat-card users">
-                                <div class="card-body">
-                                    <div class="stat-value"><?php echo number_format($stats['total_users']); ?></div>
-                                    <div class="stat-label">Total Users</div>
-                                    <div class="stat-icon">
-                                        <i class="bi bi-people"></i>
-                                    </div>
-                                </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Total Accounts</h6>
+                                <h3 class="mb-0"><?php echo number_format($stats['total_accounts']); ?></h3>
                             </div>
-                        </div>
-                        
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card stat-card accounts">
-                                <div class="card-body">
-                                    <div class="stat-value"><?php echo number_format($stats['total_accounts']); ?></div>
-                                    <div class="stat-label">Total Accounts</div>
-                                    <div class="stat-icon">
-                                        <i class="bi bi-wallet2"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card stat-card loans">
-                                <div class="card-body">
-                                    <div class="stat-value"><?php echo number_format($stats['pending_loans']); ?></div>
-                                    <div class="stat-label">Pending Loans</div>
-                                    <div class="stat-icon">
-                                        <i class="bi bi-bank"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card stat-card balance">
-                                <div class="card-body">
-                                    <div class="stat-value">$<?php echo number_format($stats['total_balance']); ?></div>
-                                    <div class="stat-label">Total Balance</div>
-                                    <div class="stat-icon">
-                                        <i class="bi bi-cash"></i>
-                                    </div>
-                                </div>
+                            <div class="avatar">
+                                <i class="bi bi-wallet2"></i>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row">
-                        <!-- Recent Users -->
-                        <div class="col-xl-6">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Recent Users</h5>
-                                    <a href="users.php" class="btn btn-sm btn-primary">View All</a>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>Name</th>
-                                                    <th>Email</th>
-                                                    <th>Joined</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($recent_users as $user): ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="avatar bg-light rounded-circle p-2 me-2">
-                                                                <i class="bi bi-person text-primary"></i>
-                                                            </div>
-                                                            <?php echo htmlspecialchars($user['full_name']); ?>
-                                                        </div>
-                                                    </td>
-                                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                                    <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
-                                                    <td>
-                                                        <a href="users.php?view=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary">
-                                                            <i class="bi bi-eye"></i> View
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Pending Loans</h6>
+                                <h3 class="mb-0"><?php echo number_format($stats['pending_loans']); ?></h3>
+                            </div>
+                            <div class="avatar">
+                                <i class="bi bi-credit-card"></i>
                             </div>
                         </div>
-                        
-                        <!-- Pending Loans -->
-                        <div class="col-xl-6">
-                            <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Pending Loans</h5>
-                                    <a href="loans.php" class="btn btn-sm btn-primary">View All</a>
-                                </div>
-                                <div class="card-body p-0">
-                                    <div class="table-responsive">
-                                        <table class="table table-hover">
-                                            <thead>
-                                                <tr>
-                                                    <th>User</th>
-                                                    <th>Amount</th>
-                                                    <th>Account</th>
-                                                    <th>Applied</th>
-                                                    <th>Action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php foreach ($pending_loans as $loan): ?>
-                                                <tr>
-                                                    <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="avatar bg-light rounded-circle p-2 me-2">
-                                                                <i class="bi bi-person text-primary"></i>
-                                                            </div>
-                                                            <?php echo htmlspecialchars($loan['full_name']); ?>
-                                                        </div>
-                                                    </td>
-                                                    <td class="fw-bold text-success">$<?php echo number_format($loan['amount']); ?></td>
-                                                    <td><span class="badge bg-light text-dark"><?php echo $loan['account_number']; ?></span></td>
-                                                    <td><?php echo date('M d, Y', strtotime($loan['created_at'])); ?></td>
-                                                    <td>
-                                                        <a href="loans.php?view=<?php echo $loan['id']; ?>" class="btn btn-sm btn-primary">
-                                                            <i class="bi bi-eye"></i> Review
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                                <?php endforeach; ?>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="text-muted mb-2">Total Balance</h6>
+                                <h3 class="mb-0">$<?php echo number_format($stats['total_balance']); ?></h3>
                             </div>
+                            <div class="avatar">
+                                <i class="bi bi-cash"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Recent Users -->
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="bi bi-people"></i> Recent Users</h5>
+                        <a href="users.php" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Joined</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($recent_users as $user): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar bg-light rounded-circle p-2 me-2">
+                                                    <i class="bi bi-person text-primary"></i>
+                                                </div>
+                                                <?php echo htmlspecialchars($user['full_name']); ?>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                        <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
+                                        <td>
+                                            <a href="users.php?view=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pending Loans -->
+            <div class="col-xl-6">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0"><i class="bi bi-credit-card"></i> Pending Loans</h5>
+                        <a href="loans.php" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Account</th>
+                                        <th>Applied</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pending_loans as $loan): ?>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar bg-light rounded-circle p-2 me-2">
+                                                    <i class="bi bi-person text-primary"></i>
+                                                </div>
+                                                <?php echo htmlspecialchars($loan['full_name']); ?>
+                                            </div>
+                                        </td>
+                                        <td class="fw-bold text-success">$<?php echo number_format($loan['amount']); ?></td>
+                                        <td><span class="badge bg-light text-dark"><?php echo $loan['account_number']; ?></span></td>
+                                        <td><?php echo date('M d, Y', strtotime($loan['created_at'])); ?></td>
+                                        <td>
+                                            <a href="loans.php?view=<?php echo $loan['id']; ?>" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-eye"></i> Review
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

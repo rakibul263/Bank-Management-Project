@@ -67,11 +67,9 @@ $stmt = $conn->prepare("
     FROM transactions t 
     JOIN accounts a ON t.account_id = a.id 
     WHERE t.account_id = ? 
-    AND DATE(t.created_at) >= ? 
-    AND DATE(t.created_at) <= ? 
     ORDER BY t.created_at ASC
 ");
-$stmt->execute([$account_id, $start_date, $end_date]);
+$stmt->execute([$account_id]);
 $transactions = $stmt->fetchAll();
 
 // Get user information

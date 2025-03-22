@@ -49,6 +49,7 @@ $account_filter = isset($_GET['account']) ? (int)$_GET['account'] : null;
 $type_filter = isset($_GET['type']) ? sanitize_input($_GET['type']) : null;
 $date_from = isset($_GET['date_from']) ? sanitize_input($_GET['date_from']) : null;
 $date_to = isset($_GET['date_to']) ? sanitize_input($_GET['date_to']) : null;
+$sort_order = isset($_GET['sort']) ? sanitize_input($_GET['sort']) : 'DESC'; // Default to DESC
 
 $query = "
     SELECT t.*, a.account_number, a.account_type 
@@ -78,7 +79,8 @@ if ($date_to) {
     $params[] = $date_to;
 }
 
-$query .= " ORDER BY t.created_at DESC";
+// Add sorting
+$query .= " ORDER BY t.created_at " . ($sort_order === 'ASC' ? 'ASC' : 'DESC');
 
 $stmt = $conn->prepare($query);
 $stmt->execute($params);
@@ -360,6 +362,61 @@ $transactions = $stmt->fetchAll();
                 text-align: center;
             }
         }
+
+        /* Add these new styles after the existing styles */
+        .sort-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sort-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .sort-label i {
+            color: var(--primary-color);
+        }
+
+        .sort-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .sort-btn {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+        }
+
+        .sort-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 2px 8px rgba(58, 123, 213, 0.3);
+        }
+
+        .sort-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .sort-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -501,6 +558,21 @@ $transactions = $stmt->fetchAll();
                     <i class="bi bi-clock-history me-2"></i>Transaction History
                     <span class="badge bg-white text-primary ms-2"><?php echo count($transactions); ?></span>
                 </h5>
+                <div class="sort-section">
+                    <div class="sort-label">
+                        <i class="bi bi-sort"></i> Sort by Date:
+                    </div>
+                    <div class="sort-buttons">
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['sort' => 'DESC'])); ?>" 
+                           class="sort-btn <?php echo $sort_order === 'DESC' ? 'active' : ''; ?>">
+                            <i class="bi bi-sort-down"></i> Newest First
+                        </a>
+                        <a href="?<?php echo http_build_query(array_merge($_GET, ['sort' => 'ASC'])); ?>" 
+                           class="sort-btn <?php echo $sort_order === 'ASC' ? 'active' : ''; ?>">
+                            <i class="bi bi-sort-up"></i> Oldest First
+                        </a>
+                    </div>
+                </div>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($transactions)): ?>
