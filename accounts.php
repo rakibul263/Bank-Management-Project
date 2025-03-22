@@ -67,45 +67,280 @@ $accounts = $stmt->fetchAll();
     <title>Accounts - <?php echo SITE_NAME; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        .sidebar {
+        :root {
+            --primary-color: #3a7bd5;
+            --primary-gradient: linear-gradient(to right, #3a7bd5, #00d2ff);
+            --secondary-color: #6c757d;
+            --accent-color: #ffc107;
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --card-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            --text-primary: #333;
+            --text-secondary: #6c757d;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-primary);
             min-height: 100vh;
-            background: #343a40;
-            color: white;
+            display: flex;
+            flex-direction: column;
         }
-        .sidebar .nav-link {
-            color: rgba(255,255,255,.75);
+
+        .navbar {
+            background: var(--white);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            padding: 15px 0;
         }
-        .sidebar .nav-link:hover {
-            color: rgba(255,255,255,1);
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-color);
         }
-        .sidebar .nav-link.active {
-            color: white;
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin: 0 10px;
+            position: relative;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 7px;
         }
+
+        .nav-link i {
+            font-size: 1.1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-gradient);
+            bottom: -7px;
+            left: 0;
+            border-radius: 3px;
+        }
+
         .main-content {
-            padding: 20px;
+            flex: 1;
+            padding: 30px 0;
         }
+
         .card {
             border: none;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 30px;
+            overflow: hidden;
         }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: var(--primary-gradient);
+            color: var(--white);
+            font-weight: 600;
+            padding: 15px 20px;
+            border: none;
+        }
+
+        .card-title {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 5px 15px rgba(58, 123, 213, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .btn-outline-primary {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-gradient);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            border: none;
+            border-radius: var(--border-radius);
+            transition: all 0.3s;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+
+        .form-select, .form-control {
+            border-radius: var(--border-radius);
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
+            font-size: 0.95rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        /* Account Balance Styling */
         .account-balance {
             font-size: 24px;
             font-weight: bold;
-            color: #0d6efd;
+            padding: 15px;
+            color: white;
+            background: var(--primary-gradient);
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .account-balance:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius);
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease-in-out;
+        }
+
+        .page-header h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .alert {
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            margin-bottom: 25px;
+        }
+        
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+        }
+
+        .modal-header {
+            background: var(--primary-gradient);
+            color: var(--white);
+            border-top-left-radius: var(--border-radius);
+            border-top-right-radius: var(--border-radius);
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .btn-close {
+            color: var(--white);
+            filter: brightness(0) invert(1);
+        }
+
+        @media (max-width: 767px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .page-header .btn {
+                width: 100%;
+            }
+            
+            .card {
+                margin-bottom: 20px;
+            }
+            
+            .navbar-nav {
+                margin-top: 15px;
+            }
+            
+            .nav-item {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 px-0 sidebar">
-                <div class="p-3">
-                    <h4><?php echo SITE_NAME; ?></h4>
-                </div>
-                <ul class="nav flex-column">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="dashboard.php"><?php echo SITE_NAME; ?></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="dashboard.php">
                             <i class="bi bi-speedometer2"></i> Dashboard
@@ -132,71 +367,82 @@ $accounts = $stmt->fetchAll();
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="profile.php">
-                            <i class="bi bi-person"></i> Profile
-                        </a>
-                    </li>
-                    <li class="nav-item mt-3">
-                        <a class="nav-link text-danger" href="logout.php">
-                            <i class="bi bi-box-arrow-right"></i> Logout
+                        <a class="nav-link" href="statements.php">
+                            <i class="bi bi-file-earmark-text"></i> Statements
                         </a>
                     </li>
                 </ul>
-            </div>
-            
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>My Accounts</h2>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
-                        <i class="bi bi-plus-circle"></i> Create New Account
-                    </button>
+                <div class="dropdown">
+                    <div class="d-flex align-items-center" role="button" data-bs-toggle="dropdown">
+                        <div class="avatar">
+                            <?php echo substr($_SESSION['user_name'] ?? 'U', 0, 1); ?>
+                        </div>
+                        <i class="bi bi-chevron-down ms-1"></i>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                    </ul>
                 </div>
-                
-                <?php if ($error): ?>
-                    <div class="alert alert-danger"><?php echo $error; ?></div>
-                <?php endif; ?>
-                
-                <?php if ($success): ?>
-                    <div class="alert alert-success"><?php echo $success; ?></div>
-                <?php endif; ?>
-                
-                <div class="row">
-                    <?php foreach ($accounts as $account): ?>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <h5 class="card-title"><?php echo ucfirst($account['account_type']); ?> Account</h5>
-                                        <p class="card-text text-muted"><?php echo $account['account_number']; ?></p>
-                                        <div class="account-balance">
-                                            $<?php echo format_currency($account['balance']); ?>
-                                        </div>
-                                        <div class="mt-2">
-                                            <?php echo get_status_badge($account['status']); ?>
-                                        </div>
-                                    </div>
-                                    <?php if ($account['balance'] == 0): ?>
-                                    <form method="POST" action="" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this account?');">
-                                        <input type="hidden" name="account_id" value="<?php echo $account['id']; ?>">
-                                        <button type="submit" name="delete_account" class="btn btn-sm btn-danger">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                    <?php endif; ?>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-content">
+        <div class="page-header">
+            <h2><i class="bi bi-wallet2 me-2"></i>My Accounts</h2>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+                <i class="bi bi-plus-circle me-2"></i> Create New Account
+            </button>
+        </div>
+        
+        <?php if ($error): ?>
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
+            </div>
+        <?php endif; ?>
+        
+        <div class="row">
+            <?php foreach ($accounts as $account): ?>
+            <div class="col-md-6 col-lg-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="card-title"><?php echo ucfirst($account['account_type']); ?> Account</h5>
+                                <p class="card-text text-muted"><?php echo $account['account_number']; ?></p>
+                                <div class="account-balance">
+                                    $<?php echo format_currency($account['balance']); ?>
                                 </div>
-                                <div class="mt-3">
-                                    <a href="transactions.php?account=<?php echo $account['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                        View Transactions
-                                    </a>
+                                <div class="mt-2">
+                                    <?php echo get_status_badge($account['status']); ?>
                                 </div>
                             </div>
+                            <?php if ($account['balance'] == 0): ?>
+                            <form method="POST" action="" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this account?');">
+                                <input type="hidden" name="account_id" value="<?php echo $account['id']; ?>">
+                                <button type="submit" name="delete_account" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                        <div class="mt-3">
+                            <a href="transactions.php?account=<?php echo $account['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-list-ul me-1"></i> View Transactions
+                            </a>
                         </div>
                     </div>
-                    <?php endforeach; ?>
                 </div>
             </div>
+            <?php endforeach; ?>
         </div>
     </div>
     
@@ -205,7 +451,7 @@ $accounts = $stmt->fetchAll();
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Create New Account</h5>
+                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Create New Account</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form method="POST" action="">

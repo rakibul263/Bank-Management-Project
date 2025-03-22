@@ -65,6 +65,9 @@ CREATE TABLE loans (
     term_months INT NOT NULL,
     status ENUM('pending', 'approved', 'rejected', 'paid') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    remarks TEXT DEFAULT NULL,
+    processed_at TIMESTAMP NULL,
+    monthly_payment DECIMAL(15,2) NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (account_id) REFERENCES accounts(id)
 );

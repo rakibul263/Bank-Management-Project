@@ -129,8 +129,18 @@ $transaction_types = ['deposit', 'withdrawal', 'transfer', 'loan'];
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="create_admin.php">
+                            <i class="bi bi-person-plus"></i> Create Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link active" href="transactions.php">
                             <i class="bi bi-cash"></i> Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.php">
+                            <i class="bi bi-person-circle"></i> My Profile
                         </a>
                     </li>
                     <li class="nav-item mt-3">

@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once '../config.php';
 
 // Make sure session is started
 if (session_status() === PHP_SESSION_NONE) {

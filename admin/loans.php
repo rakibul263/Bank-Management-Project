@@ -13,47 +13,76 @@ $success = '';
 
 // Handle loan approval/rejection
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_loan'])) {
-    $loan_id = (int)$_POST['loan_id'];
-    $action = sanitize_input($_POST['action']);
-    $remarks = sanitize_input($_POST['remarks']);
+    $loan_id = isset($_POST['loan_id']) ? (int)$_POST['loan_id'] : 0;
+    $action = isset($_POST['process_loan']) ? $_POST['process_loan'] : '';
+    $remarks = isset($_POST['remarks']) ? sanitize_input($_POST['remarks']) : '';
     
-    try {
-        // Get loan details
-        $stmt = $conn->prepare("
-            SELECT l.*, a.balance, a.id as account_id 
-            FROM loans l
-            JOIN accounts a ON l.account_id = a.id
-            WHERE l.id = ? AND l.status = 'pending'
-        ");
-        $stmt->execute([$loan_id]);
-        $loan = $stmt->fetch();
-        
-        if (!$loan) {
-            $error = 'Loan not found or already processed';
-        } else {
-            if ($action === 'approve') {
-                // Update loan status
-                $stmt = $conn->prepare("UPDATE loans SET status = 'approved', remarks = ?, processed_at = NOW() WHERE id = ?");
-                $stmt->execute([$remarks, $loan_id]);
-                
-                // Update account balance
-                $stmt = $conn->prepare("UPDATE accounts SET balance = balance + ? WHERE id = ?");
-                $stmt->execute([$loan['amount'], $loan['account_id']]);
-                
-                // Create transaction record
-                create_transaction($loan['account_id'], 'loan', $loan['amount'], 'Loan approved: ' . $remarks);
-                
-                $success = 'Loan approved successfully!';
+    if ($loan_id <= 0) {
+        $error = 'Invalid loan ID.';
+    } elseif (empty($remarks)) {
+        $error = 'Remarks are required.';
+    } else {
+        try {
+            $conn->beginTransaction(); // Start transaction for consistency
+            
+            // Get loan details
+            $stmt = $conn->prepare("
+                SELECT l.*, a.balance, a.id as account_id 
+                FROM loans l
+                JOIN accounts a ON l.account_id = a.id
+                WHERE l.id = ? AND l.status = 'pending'
+            ");
+            $stmt->execute([$loan_id]);
+            $loan = $stmt->fetch();
+            
+            if (!$loan) {
+                $conn->rollBack();
+                $error = 'Loan not found or already processed';
             } else {
-                // Update loan status
-                $stmt = $conn->prepare("UPDATE loans SET status = 'rejected', remarks = ?, processed_at = NOW() WHERE id = ?");
-                $stmt->execute([$remarks, $loan_id]);
-                
-                $success = 'Loan rejected successfully!';
+                if ($action === 'approve') {
+                    // Calculate monthly payment
+                    $monthly_payment = calculate_monthly_payment($loan['amount'], $loan['interest_rate'], $loan['term_months']);
+                    
+                    // Update loan status and monthly payment
+                    $stmt = $conn->prepare("UPDATE loans SET status = 'approved', remarks = ?, processed_at = NOW(), monthly_payment = ? WHERE id = ?");
+                    if (!$stmt->execute([$remarks, $monthly_payment, $loan_id])) {
+                        throw new Exception("Failed to update loan status");
+                    }
+                    
+                    // Update account balance
+                    $stmt = $conn->prepare("UPDATE accounts SET balance = balance + ? WHERE id = ?");
+                    if (!$stmt->execute([$loan['amount'], $loan['account_id']])) {
+                        throw new Exception("Failed to update account balance");
+                    }
+                    
+                    // Create transaction record
+                    $new_balance = $loan['balance'] + $loan['amount'];
+                    $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) 
+                                          VALUES (?, ?, ?, ?, ?)");
+                    if (!$stmt->execute([$loan['account_id'], 'loan', $loan['amount'], $new_balance, 'Loan approved: ' . $remarks])) {
+                        throw new Exception("Failed to create transaction record");
+                    }
+                    
+                    $conn->commit();
+                    $success = 'Loan approved successfully!';
+                } else if ($action === 'reject') {
+                    // Update loan status
+                    $stmt = $conn->prepare("UPDATE loans SET status = 'rejected', remarks = ?, processed_at = NOW() WHERE id = ?");
+                    if (!$stmt->execute([$remarks, $loan_id])) {
+                        throw new Exception("Failed to update loan status");
+                    }
+                    
+                    $conn->commit();
+                    $success = 'Loan rejected successfully!';
+                } else {
+                    $conn->rollBack();
+                    $error = 'Invalid action specified.';
+                }
             }
+        } catch (Exception $e) {
+            $conn->rollBack();
+            $error = 'Failed to process loan: ' . $e->getMessage();
         }
-    } catch (PDOException $e) {
-        $error = 'Failed to process loan. Please try again.';
     }
 }
 
@@ -145,8 +174,18 @@ $loans = $stmt->fetchAll();
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="create_admin.php">
+                            <i class="bi bi-person-plus"></i> Create Admin
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="transactions.php">
                             <i class="bi bi-cash"></i> Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.php">
+                            <i class="bi bi-person-circle"></i> My Profile
                         </a>
                     </li>
                     <li class="nav-item mt-3">
@@ -199,7 +238,7 @@ $loans = $stmt->fetchAll();
                                         </tr>
                                         <tr>
                                             <th>Monthly Payment:</th>
-                                            <td>$<?php echo format_currency($loan_details['monthly_payment']); ?></td>
+                                            <td>$<?php echo format_currency(isset($loan_details['monthly_payment']) ? $loan_details['monthly_payment'] : 0); ?></td>
                                         </tr>
                                         <tr>
                                             <th>Status:</th>
@@ -209,7 +248,7 @@ $loans = $stmt->fetchAll();
                                             <th>Applied:</th>
                                             <td><?php echo date('M d, Y', strtotime($loan_details['created_at'])); ?></td>
                                         </tr>
-                                        <?php if ($loan_details['processed_at']): ?>
+                                        <?php if (isset($loan_details['processed_at']) && $loan_details['processed_at']): ?>
                                         <tr>
                                             <th>Processed:</th>
                                             <td><?php echo date('M d, Y', strtotime($loan_details['processed_at'])); ?></td>

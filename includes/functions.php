@@ -3,6 +3,10 @@ require_once __DIR__ . '/../config.php';
 
 // Security functions
 function sanitize_input($data) {
+    // Handle null values
+    if ($data === null) {
+        return '';
+    }
     $data = trim($data);
     $data = stripslashes($data);
     $data = htmlspecialchars($data);
@@ -68,13 +72,23 @@ function create_transaction($account_id, $type, $amount, $description = '') {
         $conn->beginTransaction();
         
         $current_balance = get_account_balance($account_id);
-        $new_balance = $type === 'deposit' ? $current_balance + $amount : $current_balance - $amount;
+        $new_balance = $current_balance;
+        
+        // Determine how to adjust the balance based on transaction type
+        if ($type === 'deposit' || $type === 'loan') {
+            $new_balance = $current_balance + $amount;
+        } else if ($type === 'withdrawal' || $type === 'transfer_out') {
+            $new_balance = $current_balance - $amount;
+        }
         
         $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$account_id, $type, $amount, $new_balance, $description]);
         
-        $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
-        $stmt->execute([$new_balance, $account_id]);
+        // Only update the account balance if not already updated in loan processing
+        if ($type !== 'loan') {
+            $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
+            $stmt->execute([$new_balance, $account_id]);
+        }
         
         $conn->commit();
         return true;
@@ -107,7 +121,11 @@ function validate_password($password) {
 
 // UI Helper functions
 function format_currency($amount) {
-    return number_format($amount, 2);
+    // Handle null values
+    if ($amount === null || $amount === '') {
+        $amount = 0;
+    }
+    return number_format((float)$amount, 2);
 }
 
 function get_status_badge($status) {
@@ -122,5 +140,21 @@ function get_status_badge($status) {
     
     $color = $badges[$status] ?? 'primary';
     return "<span class='badge bg-{$color}'>{$status}</span>";
+}
+
+// Loan calculation function
+function calculate_monthly_payment($loan_amount, $interest_rate, $term_months) {
+    // Convert annual interest rate to monthly and decimal form
+    $monthly_interest_rate = ($interest_rate / 100) / 12;
+    
+    // Calculate monthly payment using the formula: P * r * (1+r)^n / ((1+r)^n - 1)
+    if ($monthly_interest_rate > 0) {
+        $monthly_payment = $loan_amount * $monthly_interest_rate * pow(1 + $monthly_interest_rate, $term_months) / (pow(1 + $monthly_interest_rate, $term_months) - 1);
+    } else {
+        // If interest rate is 0, simply divide the principal by the term
+        $monthly_payment = $loan_amount / $term_months;
+    }
+    
+    return round($monthly_payment, 2);
 }
 ?> 
