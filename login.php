@@ -35,22 +35,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #4e73df;
-            --primary-dark: #2e59d9;
-            --secondary-color: #858796;
-            --success-color: #1cc88a;
-            --card-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            --primary-color: #3a5a9d;
+            --primary-dark: #284888;
+            --primary-gradient: linear-gradient(135deg, #3a5a9d 0%, #1e3c72 100%);
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4ecf7 100%);
+            --card-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
             --input-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            --card-border: rgba(255, 255, 255, 0.3);
+            --text-primary: #2c3e50;
+            --text-secondary: #6c757d;
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: var(--bg-gradient);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             position: relative;
             overflow-x: hidden;
+            color: var(--text-primary);
         }
 
         /* Enhanced background animation */
@@ -63,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             opacity: 0.2;
             filter: blur(100px);
             animation: floatBubble 20s infinite;
+            z-index: -1;
         }
 
         body::before {
@@ -95,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             backdrop-filter: blur(10px);
             position: relative;
             z-index: 1;
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--card-border);
             transform: translateY(0);
             transition: all 0.3s ease;
             animation: fadeInUp 0.6s ease-out;
@@ -146,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: translateX(-50%);
             width: 50px;
             height: 4px;
-            background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+            background: var(--primary-gradient);
             border-radius: 2px;
         }
 
@@ -159,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-form .form-label {
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--text-primary);
             margin-bottom: 0.5rem;
             font-size: 0.95rem;
             transform: translateY(0);
@@ -191,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .login-form .input-group:focus-within {
-            box-shadow: 0 0 0 3px rgba(78,115,223,0.15);
+            box-shadow: 0 0 0 3px rgba(58, 90, 157, 0.15);
             transform: translateY(-2px);
         }
 
@@ -265,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border-radius: 12px;
             font-weight: 600;
             font-size: 1.1rem;
-            background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
+            background: var(--primary-gradient);
             border: none;
             position: relative;
             overflow: hidden;
@@ -273,6 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             animation: fadeIn 0.8s ease-out;
             animation-delay: 0.3s;
             animation-fill-mode: both;
+            box-shadow: 0 4px 15px rgba(58, 90, 157, 0.3);
         }
 
         .login-btn::before {
@@ -293,7 +301,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .login-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(78,115,223,0.3);
+            box-shadow: 0 7px 20px rgba(58, 90, 157, 0.4);
         }
 
         .login-btn:hover::before {
@@ -380,6 +388,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.2rem;
         }
 
+        /* Bank icon and brand styling */
+        .bank-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .bank-logo {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            box-shadow: 0 5px 15px rgba(58, 90, 157, 0.3);
+            margin-right: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(58, 90, 157, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(58, 90, 157, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(58, 90, 157, 0); }
+        }
+
+        /* Mobile responsiveness improvements */
         @media (max-width: 576px) {
             .login-container {
                 margin: 40px 20px;
@@ -398,12 +436,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 width: 200px;
                 height: 200px;
             }
+
+            .bank-logo {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="login-container">
+            <div class="bank-brand">
+                <div class="bank-logo">
+                    <i class="bi bi-bank"></i>
+                </div>
+            </div>
             <div class="login-header">
                 <h1><?php echo SITE_NAME; ?></h1>
                 <p>Welcome back! Please login to your account</p>
