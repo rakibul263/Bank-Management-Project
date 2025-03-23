@@ -457,80 +457,10 @@ $pending_loan_count = $stmt->fetchColumn();
     </style>
 </head>
 <body>
-    <!-- Modern Navbar -->
-    <nav class="navbar navbar-expand-lg">
-    <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">
-                <i class="bi bi-bank"></i>
-                Admin Panel
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <i class="bi bi-list"></i>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">
-                            <i class="bi bi-speedometer2"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="users.php">
-                            <i class="bi bi-people"></i>
-                            Users
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="accounts.php">
-                            <i class="bi bi-bank"></i>
-                            Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transactions.php">
-                            <i class="bi bi-cash"></i>
-                            Transactions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="loans.php">
-                            <i class="bi bi-credit-card"></i>
-                            Loans
-                            <?php if ($pending_loan_count > 0): ?>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                <?php echo $pending_loan_count; ?>
-                                <span class="visually-hidden">pending loans</span>
-                            </span>
-                            <?php endif; ?>
-                        </a>
-                    </li>
-                    <?php if ($current_admin['username'] === 'admin'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="create_admin.php">
-                            <i class="bi bi-person-plus"></i>
-                            Create Admin
-                        </a>
-                    </li>
-                    <?php endif; ?>
-                    <li class="nav-item">
-                        <a class="nav-link" href="profile.php">
-                            <i class="bi bi-person"></i>
-                            Profile
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="logout.php">
-                            <i class="bi bi-box-arrow-right"></i>
-                            Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    <!-- Include the navbar -->
+    <?php include 'navbar.php'; ?>
             
-            <!-- Main Content -->
+    <!-- Main Content -->
     <div class="main-content">
                 <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="bi bi-credit-card"></i> Loans Management</h2>

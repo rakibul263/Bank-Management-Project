@@ -72,8 +72,23 @@ CREATE TABLE loans (
     FOREIGN KEY (account_id) REFERENCES accounts(id)
 );
 
+-- Withdrawal Requests table
+CREATE TABLE withdrawal_requests (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    account_id INT NOT NULL,
+    admin_id INT NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    FOREIGN KEY (account_id) REFERENCES accounts(id),
+    FOREIGN KEY (admin_id) REFERENCES admins(id)
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_account_number ON accounts(account_number);
 CREATE INDEX idx_transaction_date ON transactions(created_at);
 CREATE INDEX idx_user_email ON users(email);
-CREATE INDEX idx_loan_status ON loans(status); 
+CREATE INDEX idx_loan_status ON loans(status);
+CREATE INDEX idx_withdrawal_status ON withdrawal_requests(status); 

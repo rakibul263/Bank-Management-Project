@@ -98,6 +98,78 @@ function create_transaction($account_id, $type, $amount, $description = '') {
     }
 }
 
+// Withdrawal request functions
+function create_withdrawal_request($account_id, $admin_id, $amount, $description = '') {
+    global $conn;
+    try {
+        $conn->beginTransaction();
+        
+        // Check if the account has sufficient balance
+        $current_balance = get_account_balance($account_id);
+        if ($current_balance < $amount) {
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Create a withdrawal request
+        $stmt = $conn->prepare("INSERT INTO withdrawal_requests (account_id, admin_id, amount, description) 
+                               VALUES (?, ?, ?, ?)");
+        $result = $stmt->execute([$account_id, $admin_id, $amount, $description]);
+        
+        $conn->commit();
+        return $result;
+    } catch (Exception $e) {
+        $conn->rollBack();
+        return false;
+    }
+}
+
+function process_withdrawal_request($request_id, $status, $admin_id) {
+    global $conn;
+    try {
+        $conn->beginTransaction();
+        
+        // Get the withdrawal request
+        $stmt = $conn->prepare("SELECT * FROM withdrawal_requests WHERE id = ?");
+        $stmt->execute([$request_id]);
+        $request = $stmt->fetch();
+        
+        if (!$request) {
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Update the request status
+        $stmt = $conn->prepare("UPDATE withdrawal_requests SET status = ?, processed_at = NOW() WHERE id = ?");
+        $stmt->execute([$status, $request_id]);
+        
+        // If approved, create a transaction and update balance directly (without using create_transaction)
+        if ($status === 'approved') {
+            $account_id = $request['account_id'];
+            $amount = $request['amount'];
+            $description = 'Withdrawal approved by admin ID: ' . $admin_id;
+            
+            // Get current balance
+            $current_balance = get_account_balance($account_id);
+            $new_balance = $current_balance - $amount;
+            
+            // Insert transaction record
+            $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) VALUES (?, 'withdrawal', ?, ?, ?)");
+            $stmt->execute([$account_id, $amount, $new_balance, $description]);
+            
+            // Update account balance
+            $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
+            $stmt->execute([$new_balance, $account_id]);
+        }
+        
+        $conn->commit();
+        return true;
+    } catch (Exception $e) {
+        $conn->rollBack();
+        return false;
+    }
+}
+
 // Loan functions
 function can_apply_loan($user_id) {
     global $conn;
@@ -135,7 +207,9 @@ function get_status_badge($status) {
         'completed' => 'success',
         'failed' => 'danger',
         'frozen' => 'secondary',
-        'inactive' => 'secondary'
+        'inactive' => 'secondary',
+        'approved' => 'success',
+        'rejected' => 'danger'
     ];
     
     $color = $badges[$status] ?? 'primary';

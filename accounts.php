@@ -333,116 +333,65 @@ $accounts = $stmt->fetchAll();
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php"><?php echo SITE_NAME; ?></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="accounts.php">
-                            <i class="bi bi-wallet2"></i> Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transactions.php">
-                            <i class="bi bi-cash"></i> Transactions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transfer.php">
-                            <i class="bi bi-arrow-left-right"></i> Transfer
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="loans.php">
-                            <i class="bi bi-bank"></i> Loans
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="statements.php">
-                            <i class="bi bi-file-earmark-text"></i> Statements
-                        </a>
-                    </li>
-                </ul>
-                <div class="dropdown">
-                    <div class="d-flex align-items-center" role="button" data-bs-toggle="dropdown">
-                        <div class="avatar">
-                            <?php echo substr($_SESSION['user_name'] ?? 'U', 0, 1); ?>
-                        </div>
-                        <i class="bi bi-chevron-down ms-1"></i>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
-    <div class="container main-content">
-        <div class="page-header">
-            <h2><i class="bi bi-wallet2 me-2"></i>My Accounts</h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
-                <i class="bi bi-plus-circle me-2"></i> Create New Account
-            </button>
-        </div>
-        
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center page-header mb-4">
+                <h2><i class="bi bi-wallet2 me-2"></i>Your Accounts</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createAccountModal">
+                    <i class="bi bi-plus-circle me-2"></i>New Account
+                </button>
             </div>
-        <?php endif; ?>
-        
-        <?php if ($success): ?>
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
-            </div>
-        <?php endif; ?>
-        
-        <div class="row">
-            <?php foreach ($accounts as $account): ?>
-            <div class="col-md-6 col-lg-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <h5 class="card-title"><?php echo ucfirst($account['account_type']); ?> Account</h5>
-                                <p class="card-text text-muted"><?php echo $account['account_number']; ?></p>
-                                <div class="account-balance">
-                                    $<?php echo format_currency($account['balance']); ?>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($success): ?>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="row">
+                <?php foreach ($accounts as $account): ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title"><?php echo ucfirst($account['account_type']); ?> Account</h5>
+                                    <p class="card-text text-muted"><?php echo $account['account_number']; ?></p>
+                                    <div class="account-balance">
+                                        $<?php echo format_currency($account['balance']); ?>
+                                    </div>
+                                    <div class="mt-2">
+                                        <?php echo get_status_badge($account['status']); ?>
+                                    </div>
                                 </div>
-                                <div class="mt-2">
-                                    <?php echo get_status_badge($account['status']); ?>
-                                </div>
+                                <?php if ($account['balance'] == 0): ?>
+                                <form method="POST" action="" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this account?');">
+                                    <input type="hidden" name="account_id" value="<?php echo $account['id']; ?>">
+                                    <button type="submit" name="delete_account" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                <?php endif; ?>
                             </div>
-                            <?php if ($account['balance'] == 0): ?>
-                            <form method="POST" action="" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this account?');">
-                                <input type="hidden" name="account_id" value="<?php echo $account['id']; ?>">
-                                <button type="submit" name="delete_account" class="btn btn-sm btn-danger">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                            <?php endif; ?>
-                        </div>
-                        <div class="mt-3">
-                            <a href="transactions.php?account=<?php echo $account['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-list-ul me-1"></i> View Transactions
-                            </a>
+                            <div class="mt-3">
+                                <a href="transactions.php?account=<?php echo $account['id']; ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-list-ul me-1"></i> View Transactions
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                <?php endforeach; ?>
             </div>
-            <?php endforeach; ?>
         </div>
     </div>
     

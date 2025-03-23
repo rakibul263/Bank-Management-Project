@@ -346,124 +346,73 @@ $transfers = $stmt->fetchAll();
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php"><?php echo SITE_NAME; ?></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="accounts.php">
-                            <i class="bi bi-wallet2"></i> Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transactions.php">
-                            <i class="bi bi-cash"></i> Transactions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="transfer.php">
-                            <i class="bi bi-arrow-left-right"></i> Transfer
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="loans.php">
-                            <i class="bi bi-bank"></i> Loans
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="statements.php">
-                            <i class="bi bi-file-earmark-text"></i> Statements
-                        </a>
-                    </li>
-                </ul>
-                <div class="dropdown">
-                    <div class="d-flex align-items-center" role="button" data-bs-toggle="dropdown">
-                        <div class="avatar">
-                            <?php echo substr($_SESSION['user_name'] ?? 'U', 0, 1); ?>
-                        </div>
-                        <i class="bi bi-chevron-down ms-1"></i>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
-    <div class="container main-content">
-        <div class="page-header">
-            <h2><i class="bi bi-arrow-left-right me-2"></i>Transfer Funds</h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#transferModal">
-                <i class="bi bi-plus-circle me-2"></i> New Transfer
-            </button>
-        </div>
-        
-        <?php if ($error): ?>
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-arrow-left-right me-2"></i>Transfer Funds</h2>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#transferModal">
+                    <i class="bi bi-plus-circle me-2"></i>New Transfer
+                </button>
             </div>
-        <?php endif; ?>
-        
-        <?php if ($success): ?>
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
-            </div>
-        <?php endif; ?>
-        
-        <!-- Transfer History -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Transfer History</h5>
-            </div>
-            <div class="card-body p-0">
-                <?php if (empty($transfers)): ?>
-                    <div class="p-4 text-center">
-                        <i class="bi bi-inbox text-secondary" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-3">No transfers found</p>
-                    </div>
-                <?php else: ?>
-                    <div class="list-group list-group-flush">
-                        <?php foreach ($transfers as $transfer): ?>
-                        <div class="transfer-item">
-                            <div class="d-flex align-items-center">
-                                <div class="transfer-icon">
-                                    <i class="bi bi-arrow-left-right"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-0">Transfer</h6>
-                                    <small class="text-muted">
-                                        From: <?php echo $transfer['from_account_number']; ?><br>
-                                        To: <?php echo $transfer['to_account_number']; ?>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="text-end">
-                                <div class="text-danger">
-                                    -$<?php echo format_currency($transfer['amount']); ?>
-                                </div>
-                                <small class="text-muted">
-                                    <?php echo date('M d, Y H:i', strtotime($transfer['created_at'])); ?>
-                                </small>
-                                <div class="mt-1">
-                                    <?php echo get_status_badge($transfer['status']); ?>
-                                </div>
-                            </div>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($success): ?>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
+                </div>
+            <?php endif; ?>
+            
+            <!-- Transfer History -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-clock-history me-2"></i>Transfer History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($transfers)): ?>
+                        <div class="p-4 text-center">
+                            <i class="bi bi-inbox text-secondary" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">No transfers found</p>
                         </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($transfers as $transfer): ?>
+                            <div class="transfer-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="transfer-icon">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">Transfer</h6>
+                                        <small class="text-muted">
+                                            From: <?php echo $transfer['from_account_number']; ?><br>
+                                            To: <?php echo $transfer['to_account_number']; ?>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="text-danger">
+                                        -$<?php echo format_currency($transfer['amount']); ?>
+                                    </div>
+                                    <small class="text-muted">
+                                        <?php echo date('M d, Y H:i', strtotime($transfer['created_at'])); ?>
+                                    </small>
+                                    <div class="mt-1">
+                                        <?php echo get_status_badge($transfer['status']); ?>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>

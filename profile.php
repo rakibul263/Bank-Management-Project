@@ -273,61 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php"><?php echo SITE_NAME; ?></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="accounts.php">
-                            <i class="bi bi-wallet2"></i> Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transactions.php">
-                            <i class="bi bi-cash"></i> Transactions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transfer.php">
-                            <i class="bi bi-arrow-left-right"></i> Transfer
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="loans.php">
-                            <i class="bi bi-bank"></i> Loans
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="statements.php">
-                            <i class="bi bi-file-earmark-text"></i> Statements
-                        </a>
-                    </li>
-                </ul>
-                <div class="dropdown">
-                    <div class="d-flex align-items-center" role="button" data-bs-toggle="dropdown">
-                        <div class="avatar">
-                            <?php echo substr($user['full_name'] ?? 'U', 0, 1); ?>
-                        </div>
-                        <i class="bi bi-chevron-down ms-1"></i>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item active" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
     <div class="container main-content">
         <div class="profile-header text-center">

@@ -21,6 +21,63 @@ $stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");
 $stmt->execute([$_SESSION['admin_id']]);
 $admin = $stmt->fetch();
 
+// Get accounts created by this admin with status counts
+$stmt = $conn->prepare("SELECT 
+                        COUNT(*) as total_accounts,
+                        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_accounts,
+                        SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive_accounts 
+                        FROM accounts");
+$stmt->execute();
+$accounts_stat = $stmt->fetch();
+$total_accounts_created = $accounts_stat['total_accounts'] ?? 0;
+$active_accounts = $accounts_stat['active_accounts'] ?? 0;
+$inactive_accounts = $accounts_stat['inactive_accounts'] ?? 0;
+
+// 2. Get loans approved/rejected by this admin
+$stmt = $conn->prepare("SELECT 
+                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_loans,
+                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_loans
+                        FROM loans");
+$stmt->execute();
+$loans_stat = $stmt->fetch();
+$approved_loans = $loans_stat['approved_loans'] ?? 0;
+$rejected_loans = $loans_stat['rejected_loans'] ?? 0;
+
+// 3. Get withdrawals approved/rejected by this admin
+$stmt = $conn->prepare("SELECT 
+                        COUNT(*) as total_withdrawals,
+                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_withdrawals,
+                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_withdrawals
+                        FROM withdrawal_requests 
+                        WHERE admin_id = ? AND (status = 'approved' OR status = 'rejected')");
+$stmt->execute([$_SESSION['admin_id']]);
+$withdrawals_stat = $stmt->fetch();
+$total_withdrawals = $withdrawals_stat['total_withdrawals'] ?? 0;
+$approved_withdrawals = $withdrawals_stat['approved_withdrawals'] ?? 0;
+$rejected_withdrawals = $withdrawals_stat['rejected_withdrawals'] ?? 0;
+
+// Get recent activity
+// Get 5 most recent withdrawals processed by admin
+$stmt = $conn->prepare("SELECT wr.*, u.full_name as user_name, a.account_number 
+                        FROM withdrawal_requests wr
+                        JOIN accounts a ON wr.account_id = a.id
+                        JOIN users u ON a.user_id = u.id
+                        WHERE wr.admin_id = ? AND (wr.status = 'approved' OR wr.status = 'rejected')
+                        ORDER BY wr.processed_at DESC
+                        LIMIT 5");
+$stmt->execute([$_SESSION['admin_id']]);
+$recent_withdrawals = $stmt->fetchAll();
+
+// Get 5 most recent loans processed by admin
+$stmt = $conn->prepare("SELECT l.*, u.full_name as user_name 
+                        FROM loans l
+                        JOIN users u ON l.user_id = u.id
+                        WHERE l.status = 'approved' OR l.status = 'rejected'
+                        ORDER BY l.processed_at DESC
+                        LIMIT 5");
+$stmt->execute();
+$recent_loans = $stmt->fetchAll();
+
 // Handle password change
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     $current_password = $_POST['current_password'];
@@ -335,72 +392,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Modern Navbar -->
-            <nav class="navbar navbar-expand-lg">
-                <div class="container-fluid">
-                    <a class="navbar-brand" href="index.php">
-                        <i class="bi bi-bank"></i>
-                        Admin Panel
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <div class="collapse navbar-collapse" id="navbarNav">
-                        <ul class="navbar-nav ms-auto">
-                            <li class="nav-item">
-                                <a class="nav-link" href="index.php">
-                                    <i class="bi bi-speedometer2"></i>
-                                    Dashboard
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="users.php">
-                                    <i class="bi bi-people"></i>
-                                    Users
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="accounts.php">
-                                    <i class="bi bi-bank"></i>
-                                    Accounts
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="transactions.php">
-                                    <i class="bi bi-cash"></i>
-                                    Transactions
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="loans.php">
-                                    <i class="bi bi-credit-card"></i>
-                                    Loans
-                                </a>
-                            </li>
-                            <?php if ($current_admin['username'] === 'admin'): ?>
-                            <li class="nav-item">
-                                <a class="nav-link" href="create_admin.php">
-                                    <i class="bi bi-person-plus"></i>
-                                    Create Admin
-                                </a>
-                            </li>
-                            <?php endif; ?>
-                            <li class="nav-item">
-                                <a class="nav-link active" href="profile.php">
-                                    <i class="bi bi-person"></i>
-                                    Profile
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="logout.php">
-                                    <i class="bi bi-box-arrow-right"></i>
-                                    Logout
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
+            <!-- Include the navbar -->
+            <?php include 'navbar.php'; ?>
             
             <!-- Main Content -->
             <div class="col-md-12 main-content">
@@ -422,7 +415,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                 <?php endif; ?>
                 
                 <div class="row">
-                    <div class="col-md-6">
+                    <!-- Left Column - Admin Information and Activity Stats -->
+                    <div class="col-lg-4">
                         <!-- Admin Information -->
                         <div class="card mb-4">
                             <div class="card-header">
@@ -445,11 +439,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                 </table>
                             </div>
                         </div>
+                        
+                        <!-- Admin Activity Statistics -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><i class="bi bi-graph-up"></i> Activity Statistics</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Accounts Section -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-wallet2"></i> Accounts</h6>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-12">
+                                            <div class="p-3 rounded-3 bg-light">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Total Accounts Created</span>
+                                                    <span class="badge bg-primary rounded-pill"><?php echo $total_accounts_created; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-3 bg-success bg-opacity-10">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Active</span>
+                                                    <span class="badge bg-success rounded-pill"><?php echo $active_accounts; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-3 bg-secondary bg-opacity-10">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Inactive</span>
+                                                    <span class="badge bg-secondary rounded-pill"><?php echo $inactive_accounts; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Loans Section -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-cash-coin"></i> Loans</h6>
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-3 bg-success bg-opacity-10">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Approved</span>
+                                                    <span class="badge bg-success rounded-pill"><?php echo $approved_loans; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-3 bg-danger bg-opacity-10">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Rejected</span>
+                                                    <span class="badge bg-danger rounded-pill"><?php echo $rejected_loans; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Withdrawals Section -->
+                                <div>
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-cash-stack"></i> Withdrawals</h6>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-3 bg-success bg-opacity-10">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Approved</span>
+                                                    <span class="badge bg-success rounded-pill"><?php echo $approved_withdrawals; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-3 rounded-3 bg-danger bg-opacity-10">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Rejected</span>
+                                                    <span class="badge bg-danger rounded-pill"><?php echo $rejected_withdrawals; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 mt-2">
+                                            <div class="p-3 rounded-3 bg-light">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span>Total Withdrawals Processed</span>
+                                                    <span class="badge bg-primary rounded-pill"><?php echo $total_withdrawals; ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <!-- Middle Column - Change Password -->
+                    <div class="col-lg-4">
                         <!-- Change Password Form -->
-                        <div class="card">
+                        <div class="card mb-4">
                             <div class="card-header">
                                 <h5 class="card-title mb-0"><i class="bi bi-key"></i> Change Password</h5>
                             </div>
@@ -484,6 +572,87 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                         <i class="bi bi-key"></i> Change Password
                                     </button>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column - Recent Activity -->
+                    <div class="col-lg-4">
+                        <!-- Recent Activity -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0"><i class="bi bi-activity"></i> Recent Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Recent Withdrawal Activity -->
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-cash-stack"></i> Recent Withdrawals</h6>
+                                    <?php if (empty($recent_withdrawals)): ?>
+                                        <p class="text-muted fst-italic">No recent withdrawal activity</p>
+                                    <?php else: ?>
+                                        <div class="list-group">
+                                            <?php foreach ($recent_withdrawals as $withdrawal): ?>
+                                                <div class="list-group-item list-group-item-action p-3">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1"><?php echo htmlspecialchars($withdrawal['user_name']); ?></h6>
+                                                        <small class="text-muted">
+                                                            <?php 
+                                                                $processed_date = isset($withdrawal['processed_at']) ? 
+                                                                    date('M d, Y', strtotime($withdrawal['processed_at'])) : 
+                                                                    date('M d, Y', strtotime($withdrawal['created_at']));
+                                                                echo $processed_date;
+                                                            ?>
+                                                        </small>
+                                                    </div>
+                                                    <p class="mb-1">
+                                                        Amount: $<?php echo number_format($withdrawal['amount'], 2); ?> - 
+                                                        <?php 
+                                                            $status_class = $withdrawal['status'] === 'approved' ? 'success' : 'danger';
+                                                            echo '<span class="badge bg-' . $status_class . '">' . ucfirst($withdrawal['status']) . '</span>';
+                                                        ?>
+                                                    </p>
+                                                    <small class="text-muted">
+                                                        Account: <?php echo htmlspecialchars($withdrawal['account_number']); ?>
+                                                    </small>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <!-- Recent Loan Activity -->
+                                <div>
+                                    <h6 class="fw-bold text-primary"><i class="bi bi-cash-coin"></i> Recent Loans</h6>
+                                    <?php if (empty($recent_loans)): ?>
+                                        <p class="text-muted fst-italic">No recent loan activity</p>
+                                    <?php else: ?>
+                                        <div class="list-group">
+                                            <?php foreach ($recent_loans as $loan): ?>
+                                                <div class="list-group-item list-group-item-action p-3">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1"><?php echo htmlspecialchars($loan['user_name']); ?></h6>
+                                                        <small class="text-muted">
+                                                            <?php echo date('M d, Y', strtotime($loan['processed_at'] ?? $loan['created_at'])); ?>
+                                                        </small>
+                                                    </div>
+                                                    <p class="mb-1">
+                                                        Amount: $<?php echo number_format($loan['amount'], 2); ?> - 
+                                                        <?php 
+                                                            $status_class = $loan['status'] === 'approved' ? 'success' : 'danger';
+                                                            echo '<span class="badge bg-' . $status_class . '">' . ucfirst($loan['status']) . '</span>';
+                                                        ?>
+                                                    </p>
+                                                    <small class="text-muted">
+                                                        Term: <?php echo $loan['term']; ?> months
+                                                        <?php if (isset($loan['interest_rate'])): ?>
+                                                            - Interest Rate: <?php echo $loan['interest_rate']; ?>%
+                                                        <?php endif; ?>
+                                                    </small>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -359,134 +359,89 @@ $loan_history = $stmt->fetchAll();
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php"><?php echo SITE_NAME; ?></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="accounts.php">
-                            <i class="bi bi-wallet2"></i> Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transactions.php">
-                            <i class="bi bi-cash"></i> Transactions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transfer.php">
-                            <i class="bi bi-arrow-left-right"></i> Transfer
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="loans.php">
-                            <i class="bi bi-bank"></i> Loans
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="statements.php">
-                            <i class="bi bi-file-earmark-text"></i> Statements
-                        </a>
-                    </li>
-                </ul>
-                <div class="dropdown">
-                    <div class="d-flex align-items-center" role="button" data-bs-toggle="dropdown">
-                        <div class="avatar">
-                            <?php echo substr($_SESSION['user_name'] ?? 'U', 0, 1); ?>
-                        </div>
-                        <i class="bi bi-chevron-down ms-1"></i>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
-    <div class="container main-content">
-        <div class="page-header">
-            <h2><i class="bi bi-bank me-2"></i>My Loans</h2>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loanModal">
-                <i class="bi bi-plus-circle me-2"></i> Apply for Loan
-            </button>
-        </div>
-        
-        <?php if (isset($error) && $error): ?>
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-bank me-2"></i>Loans</h2>
+                <?php if (can_apply_loan($_SESSION['user_id'])): ?>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loanModal">
+                    <i class="bi bi-plus-circle me-2"></i>Apply for Loan
+                </button>
+                <?php else: ?>
+                <button type="button" class="btn btn-secondary" disabled>
+                    <i class="bi bi-exclamation-circle me-2"></i>Maximum Loans Reached
+                </button>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
-        
-        <?php if (isset($success) && $success): ?>
-            <div class="alert alert-success">
-                <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
-            </div>
-        <?php endif; ?>
-        
-        <div class="row">
-            <?php if (isset($loans) && !empty($loans)): ?>
-                <?php foreach ($loans as $loan): ?>
-                    <div class="col-md-6 col-lg-4">
-                        <div class="loan-card">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0">Loan #<?php echo $loan['id']; ?></h5>
-                                <?php echo get_status_badge($loan['status']); ?>
-                            </div>
-                            <div class="amount mb-3">$<?php echo format_currency($loan['amount']); ?></div>
-                            <div class="info-row">
-                                <div class="info-item">
-                                    <div class="info-label">Interest Rate</div>
-                                    <div class="info-value"><?php echo $loan['interest_rate']; ?>%</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Term</div>
-                                    <div class="info-value"><?php echo $loan['term_months']; ?> months</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">Applied On</div>
-                                    <div class="info-value"><?php echo date('M d, Y', strtotime($loan['created_at'])); ?></div>
-                                </div>
-                            </div>
-                            <?php if ($loan['status'] === 'approved'): ?>
-                                <div class="mt-3 pt-3 border-top">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <div class="info-label">Monthly Payment</div>
-                                            <div class="info-value text-primary">$<?php echo format_currency($loan['monthly_payment']); ?></div>
-                                        </div>
-                                        <button class="btn btn-sm btn-outline-primary">View Details</button>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-body text-center p-5">
-                            <i class="bi bi-bank text-muted" style="font-size: 3rem;"></i>
-                            <p class="mt-3 mb-0 text-muted">You don't have any loans yet.</p>
-                            <p class="text-muted">Apply for a loan to get started.</p>
-                            <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#loanModal">
-                                <i class="bi bi-plus-circle me-2"></i> Apply for Loan
-                            </button>
-                        </div>
-                    </div>
+            
+            <?php if (isset($error) && $error): ?>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i><?php echo $error; ?>
                 </div>
             <?php endif; ?>
+            
+            <?php if (isset($success) && $success): ?>
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle-fill me-2"></i><?php echo $success; ?>
+                </div>
+            <?php endif; ?>
+            
+            <div class="row">
+                <?php if (isset($loans) && !empty($loans)): ?>
+                    <?php foreach ($loans as $loan): ?>
+                        <div class="col-md-6 col-lg-4">
+                            <div class="loan-card">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0">Loan #<?php echo $loan['id']; ?></h5>
+                                    <?php echo get_status_badge($loan['status']); ?>
+                                </div>
+                                <div class="amount mb-3">$<?php echo format_currency($loan['amount']); ?></div>
+                                <div class="info-row">
+                                    <div class="info-item">
+                                        <div class="info-label">Interest Rate</div>
+                                        <div class="info-value"><?php echo $loan['interest_rate']; ?>%</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Term</div>
+                                        <div class="info-value"><?php echo $loan['term_months']; ?> months</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Applied On</div>
+                                        <div class="info-value"><?php echo date('M d, Y', strtotime($loan['created_at'])); ?></div>
+                                    </div>
+                                </div>
+                                <?php if ($loan['status'] === 'approved'): ?>
+                                    <div class="mt-3 pt-3 border-top">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="info-label">Monthly Payment</div>
+                                                <div class="info-value text-primary">$<?php echo format_currency($loan['monthly_payment']); ?></div>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-primary">View Details</button>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center p-5">
+                                <i class="bi bi-bank text-muted" style="font-size: 3rem;"></i>
+                                <p class="mt-3 mb-0 text-muted">You don't have any loans yet.</p>
+                                <p class="text-muted">Apply for a loan to get started.</p>
+                                <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#loanModal">
+                                    <i class="bi bi-plus-circle me-2"></i> Apply for Loan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
     

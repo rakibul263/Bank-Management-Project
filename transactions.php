@@ -421,69 +421,17 @@ $transactions = $stmt->fetchAll();
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="dashboard.php"><?php echo SITE_NAME; ?></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="dashboard.php">
-                            <i class="bi bi-speedometer2"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="accounts.php">
-                            <i class="bi bi-wallet2"></i> Accounts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="transactions.php">
-                            <i class="bi bi-cash"></i> Transactions
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="transfer.php">
-                            <i class="bi bi-arrow-left-right"></i> Transfer
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="loans.php">
-                            <i class="bi bi-bank"></i> Loans
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="statements.php">
-                            <i class="bi bi-file-earmark-text"></i> Statements
-                        </a>
-                    </li>
-                </ul>
-                <div class="dropdown">
-                    <div class="d-flex align-items-center" role="button" data-bs-toggle="dropdown">
-                        <div class="avatar">
-                            <?php echo substr($_SESSION['user_name'] ?? 'U', 0, 1); ?>
-                        </div>
-                        <i class="bi bi-chevron-down ms-1"></i>
-                    </div>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="profile.php"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php include 'includes/navbar.php'; ?>
 
     <div class="container main-content">
         <!-- Page Header -->
         <div class="page-header">
             <h2>Transactions</h2>
+            <!-- Commented out New Transaction button
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#transactionModal">
                 <i class="bi bi-plus-circle"></i> New Transaction
             </button>
+            -->
         </div>
         
         <?php if ($error): ?>
@@ -620,7 +568,7 @@ $transactions = $stmt->fetchAll();
         </div>
     </div>
     
-    <!-- Transaction Modal -->
+    <!-- Transaction Modal - Commented out
     <div class="modal fade" id="transactionModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -672,6 +620,7 @@ $transactions = $stmt->fetchAll();
             </div>
         </div>
     </div>
+    -->
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
