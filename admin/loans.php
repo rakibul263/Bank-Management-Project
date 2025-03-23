@@ -8,6 +8,11 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
+// Get current admin info
+$stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");
+$stmt->execute([$_SESSION['admin_id']]);
+$current_admin = $stmt->fetch();
+
 $error = '';
 $success = '';
 
@@ -500,6 +505,14 @@ $pending_loan_count = $stmt->fetchColumn();
                             <?php endif; ?>
                         </a>
                     </li>
+                    <?php if ($current_admin['username'] === 'admin'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="create_admin.php">
+                            <i class="bi bi-person-plus"></i>
+                            Create Admin
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link" href="profile.php">
                             <i class="bi bi-person"></i>

@@ -250,6 +250,33 @@ $active_loans = $stmt->fetchAll();
                 text-align: center;
             }
         }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn i {
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+
+        .refresh-btn:active i {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body>
@@ -317,8 +344,14 @@ $active_loans = $stmt->fetchAll();
                     <h2 class="mb-0">Welcome, <?php echo htmlspecialchars($user['full_name']); ?></h2>
                     <p class="mb-0">Here's your financial overview</p>
                 </div>
-                <div class="text-end">
-                    <small>Last login: <?php echo date('M d, Y H:i'); ?></small>
+                <div class="text-end d-flex align-items-center">
+                    <button onclick="window.location.reload()" class="btn btn-light refresh-btn me-3">
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Refresh
+                    </button>
+                    <div>
+                        <small>Last login: <?php echo date('M d, Y H:i'); ?></small>
+                    </div>
                 </div>
             </div>
         </div>

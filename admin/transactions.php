@@ -8,6 +8,36 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
+// Get current admin info
+$stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");
+$stmt->execute([$_SESSION['admin_id']]);
+$current_admin = $stmt->fetch();
+
+// Define transaction limits
+define('MAX_TRANSACTION_AMOUNT', 1000000.00); // 10 Lakh Taka limit per transaction
+
+// Function to validate transaction
+function validate_transaction($account_id, $amount, $type) {
+    global $conn;
+    
+    // Get current balance
+    $stmt = $conn->prepare("SELECT balance FROM accounts WHERE id = ?");
+    $stmt->execute([$account_id]);
+    $current_balance = $stmt->fetchColumn();
+    
+    // Check transaction amount limit
+    if ($amount > MAX_TRANSACTION_AMOUNT) {
+        return "Transaction amount exceeds the maximum limit of " . number_format(MAX_TRANSACTION_AMOUNT) . " Taka";
+    }
+    
+    // For withdrawals, check if sufficient balance
+    if ($type == 'withdrawal' && $current_balance < $amount) {
+        return "Insufficient balance for withdrawal";
+    }
+    
+    return true;
+}
+
 $error = '';
 $success = '';
 
@@ -437,6 +467,14 @@ $transaction_types = ['deposit', 'withdrawal', 'transfer', 'loan'];
                             Loans
                         </a>
                     </li>
+                    <?php if ($current_admin['username'] === 'admin'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="create_admin.php">
+                            <i class="bi bi-person-plus"></i>
+                            Create Admin
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link" href="profile.php">
                             <i class="bi bi-person"></i>

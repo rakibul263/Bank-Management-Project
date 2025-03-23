@@ -8,12 +8,18 @@ if (!isset($_SESSION['admin_id'])) {
     exit();
 }
 
+// Get current admin info
+$stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");
+$stmt->execute([$_SESSION['admin_id']]);
+$current_admin = $stmt->fetch();
+
 // Get statistics
 $stats = [
     'total_users' => $conn->query("SELECT COUNT(*) FROM users")->fetchColumn(),
     'total_accounts' => $conn->query("SELECT COUNT(*) FROM accounts")->fetchColumn(),
     'pending_loans' => $conn->query("SELECT COUNT(*) FROM loans WHERE status = 'pending'")->fetchColumn(),
-    'total_balance' => $conn->query("SELECT SUM(balance) FROM accounts")->fetchColumn()
+    'total_balance' => $conn->query("SELECT COALESCE(SUM(CASE WHEN balance IS NULL THEN 0 ELSE balance END), 0) as total FROM accounts")->fetchColumn(),
+    'total_loans' => $conn->query("SELECT COALESCE(SUM(amount), 0) FROM loans WHERE status = 'approved'")->fetchColumn()
 ];
 
 // Get recent users
@@ -310,6 +316,42 @@ $pending_loans = $stmt->fetchAll();
                 padding: 0.75rem 1rem;
             }
         }
+
+        /* Add these styles to your existing CSS */
+        .refresh-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, var(--primary-color), #6f42c1);
+            border: none;
+            font-weight: 500;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(78,115,223,0.3);
+        }
+
+        .refresh-btn i {
+            font-size: 1.1rem;
+            transition: transform 0.5s ease;
+        }
+
+        .refresh-btn:active i {
+            transform: rotate(180deg);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn.loading i {
+            animation: spin 1s linear infinite;
+        }
     </style>
 </head>
 <body>
@@ -355,6 +397,14 @@ $pending_loans = $stmt->fetchAll();
                             Loans
                         </a>
                     </li>
+                    <?php if ($current_admin['username'] === 'admin'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="create_admin.php">
+                            <i class="bi bi-person-plus"></i>
+                            Create Admin
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link" href="profile.php">
                             <i class="bi bi-person"></i>
@@ -376,69 +426,70 @@ $pending_loans = $stmt->fetchAll();
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+            <button onclick="window.location.reload()" class="btn btn-primary refresh-btn">
+                <i class="bi bi-arrow-clockwise"></i>
+                Refresh Dashboard
+            </button>
         </div>
         
         <!-- Statistics Cards -->
         <div class="row">
-            <div class="col-xl-3 col-md-6">
+            <!-- Total Users Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-2">Total Users</h6>
-                                <h3 class="mb-0"><?php echo number_format($stats['total_users']); ?></h3>
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Users</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo number_format($stats['total_users']); ?></div>
                             </div>
-                            <div class="avatar">
-                                <i class="bi bi-people"></i>
-                            </div>
+                            <div class="text-primary"><i class="bi bi-people fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-md-6">
+
+            <!-- Total Accounts Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-2">Total Accounts</h6>
-                                <h3 class="mb-0"><?php echo number_format($stats['total_accounts']); ?></h3>
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Accounts</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo number_format($stats['total_accounts']); ?></div>
                             </div>
-                            <div class="avatar">
-                                <i class="bi bi-wallet2"></i>
-                            </div>
+                            <div class="text-success"><i class="bi bi-bank fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-md-6">
+
+            <!-- Total Balance Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-2">Pending Loans</h6>
-                                <h3 class="mb-0"><?php echo number_format($stats['pending_loans']); ?></h3>
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Balance</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($stats['total_balance'], 2); ?></div>
                             </div>
-                            <div class="avatar">
-                                <i class="bi bi-credit-card"></i>
-                            </div>
+                            <div class="text-info"><i class="bi bi-cash-stack fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-md-6">
+
+            <!-- Total Loans Card -->
+            <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="text-muted mb-2">Total Balance</h6>
-                                <h3 class="mb-0">$<?php echo number_format($stats['total_balance']); ?></h3>
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Loans</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($stats['total_loans'], 2); ?></div>
+                                <div class="text-xs text-muted"><?php echo $stats['pending_loans']; ?> pending</div>
                             </div>
-                            <div class="avatar">
-                                <i class="bi bi-cash"></i>
-                            </div>
+                            <div class="text-warning"><i class="bi bi-credit-card fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
@@ -541,5 +592,11 @@ $pending_loans = $stmt->fetchAll();
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Add this to your existing JavaScript
+    document.querySelector('.refresh-btn').addEventListener('click', function() {
+        this.classList.add('loading');
+    });
+    </script>
 </body>
 </html> 
