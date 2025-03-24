@@ -231,4 +231,92 @@ function calculate_monthly_payment($loan_amount, $interest_rate, $term_months) {
     
     return round($monthly_payment, 2);
 }
+
+// Admin access control functions
+function check_admin_login() {
+    if (!isset($_SESSION['admin_id'])) {
+        header('Location: login.php');
+        exit();
+    }
+}
+
+function get_admin_role($admin_id) {
+    global $conn;
+    
+    // Check if role column exists in admins table
+    $role_column_exists = false;
+    try {
+        $stmt = $conn->prepare("SHOW COLUMNS FROM admins LIKE 'role'");
+        $stmt->execute();
+        $role_column_exists = $stmt->rowCount() > 0;
+    } catch (PDOException $e) {
+        // Column doesn't exist or there was an error
+    }
+    
+    if (!$role_column_exists) {
+        // If no role column, check if this is the superadmin
+        $stmt = $conn->prepare("SELECT username FROM admins WHERE id = ?");
+        $stmt->execute([$admin_id]);
+        $admin = $stmt->fetch();
+        
+        return ($admin && $admin['username'] === 'admin') ? 'super_admin' : 'user_manager';
+    }
+    
+    // Get the admin's role
+    $stmt = $conn->prepare("SELECT role, username FROM admins WHERE id = ?");
+    $stmt->execute([$admin_id]);
+    $admin = $stmt->fetch();
+    
+    if (!$admin) {
+        return null;
+    }
+    
+    // Always ensure the main admin has super_admin role
+    if ($admin['username'] === 'admin') {
+        return 'super_admin';
+    }
+    
+    return $admin['role'] ?? 'user_manager';
+}
+
+function admin_has_permission($page, $admin_id) {
+    global $conn;
+    
+    // Define admin role permissions
+    $admin_permissions = [
+        'super_admin' => ['all'],
+        'user_manager' => ['index.php', 'users.php', 'pending_users.php', 'profile.php'],
+        'account_manager' => ['index.php', 'accounts.php', 'withdrawals.php', 'profile.php'],
+        'loan_manager' => ['index.php', 'loans.php', 'profile.php'],
+        'transaction_manager' => ['index.php', 'transactions.php', 'profile.php']
+    ];
+    
+    // Common pages that all admins can access
+    $common_pages = ['index.php', 'profile.php', 'logout.php'];
+    if (in_array($page, $common_pages)) {
+        return true;
+    }
+    
+    $admin_role = get_admin_role($admin_id);
+    
+    // Super admin can access everything
+    if ($admin_role === 'super_admin' || in_array('all', $admin_permissions[$admin_role])) {
+        return true;
+    }
+    
+    // Check if the admin has permission for this page
+    return in_array($page, $admin_permissions[$admin_role]);
+}
+
+function require_admin_permission($page) {
+    if (!isset($_SESSION['admin_id'])) {
+        header('Location: login.php');
+        exit();
+    }
+    
+    if (!admin_has_permission($page, $_SESSION['admin_id'])) {
+        header('Location: index.php?error=permission');
+        exit();
+    }
+}
 ?> 

@@ -190,6 +190,29 @@ $withdrawal_requests = $stmt->fetchAll();
             font-weight: 600;
         }
 
+        /* Replace the existing avatar styles with dashboard's avatar style */
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .admin-name {
+            display: flex;
+            align-items: center;
+        }
+        
+        .admin-name .avatar {
+            margin-right: 10px;
+        }
+
         footer {
             background: var(--white);
             padding: 20px 0;
@@ -198,6 +221,117 @@ $withdrawal_requests = $stmt->fetchAll();
             color: var(--text-secondary);
             font-size: 0.9rem;
             box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Add these styles for the custom select options */
+        .admin-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+        }
+        
+        .admin-option-avatar {
+            width: 24px;
+            height: 24px;
+            background: rgba(58, 123, 213, 0.1);
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        select.form-select {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        /* Custom dropdown styles */
+        .custom-dropdown {
+            position: relative;
+        }
+        
+        .dropdown-toggle {
+            border: 2px solid #dee2e6;
+            border-radius: var(--border-radius);
+            background: white;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            width: 100%;
+        }
+        
+        .dropdown-toggle:hover {
+            border-color: var(--primary-color);
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.08);
+            margin-top: 5px;
+            padding: 8px 0;
+            max-height: 250px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(58, 123, 213, 0.05);
+        }
+        
+        .dropdown-item.selected {
+            background: rgba(58, 123, 213, 0.1);
+            font-weight: 500;
+        }
+        
+        /* Update dropdown-item-avatar to match main avatar style */
+        .dropdown-item-avatar {
+            width: 32px;
+            height: 32px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+        
+        .placeholder-text {
+            color: #6c757d;
+        }
+        
+        @media (max-width: 767.98px) {
+            .dropdown-menu {
+                max-height: 200px;
+            }
         }
     </style>
 </head>
@@ -240,15 +374,31 @@ $withdrawal_requests = $stmt->fetchAll();
                                     </div>
                                     
                                     <div class="mb-3">
-                                        <label for="admin_id" class="form-label">Select Admin for Approval</label>
-                                        <select name="admin_id" id="admin_id" class="form-select" required>
-                                            <option value="">-- Select Admin --</option>
-                                            <?php foreach ($admins as $admin): ?>
-                                                <option value="<?php echo $admin['id']; ?>">
-                                                    <?php echo $admin['username']; ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <label for="admin_dropdown" class="form-label">Select Admin for Approval</label>
+                                        <div class="custom-dropdown">
+                                            <div class="dropdown-toggle" id="admin_dropdown">
+                                                <div class="d-flex align-items-center">
+                                                    <span class="dropdown-avatar d-none me-2">
+                                                        <div class="dropdown-item-avatar">
+                                                            <i class="bi bi-person"></i>
+                                                        </div>
+                                                    </span>
+                                                    <span class="selected-option placeholder-text">-- Select Admin --</span>
+                                                </div>
+                                                <i class="bi bi-chevron-down"></i>
+                                            </div>
+                                            <div class="dropdown-menu">
+                                                <?php foreach ($admins as $admin): ?>
+                                                    <div class="dropdown-item" data-value="<?php echo $admin['id']; ?>">
+                                                        <div class="dropdown-item-avatar">
+                                                            <i class="bi bi-person"></i>
+                                                        </div>
+                                                        <span><?php echo htmlspecialchars($admin['username']); ?></span>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                            <input type="hidden" name="admin_id" id="admin_id" required>
+                                        </div>
                                     </div>
                                     
                                     <div class="mb-3">
@@ -297,7 +447,14 @@ $withdrawal_requests = $stmt->fetchAll();
                                                     <td><?php echo date('d M Y', strtotime($request['created_at'])); ?></td>
                                                     <td><?php echo $request['account_number']; ?></td>
                                                     <td>$<?php echo format_currency($request['amount']); ?></td>
-                                                    <td><?php echo $request['admin_name']; ?></td>
+                                                    <td>
+                                                        <div class="admin-name">
+                                                            <div class="avatar">
+                                                                <i class="bi bi-person"></i>
+                                                            </div>
+                                                            <?php echo $request['admin_name']; ?>
+                                                        </div>
+                                                    </td>
                                                     <td><?php echo get_status_badge($request['status']); ?></td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -318,5 +475,52 @@ $withdrawal_requests = $stmt->fetchAll();
     <!-- Bootstrap & jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Custom dropdown functionality
+            const dropdown = $('.custom-dropdown');
+            const dropdownToggle = dropdown.find('.dropdown-toggle');
+            const dropdownMenu = dropdown.find('.dropdown-menu');
+            const dropdownItems = dropdown.find('.dropdown-item');
+            const hiddenInput = $('#admin_id');
+            const selectedOption = dropdown.find('.selected-option');
+            const dropdownAvatar = dropdown.find('.dropdown-avatar');
+            
+            // Toggle dropdown menu
+            dropdownToggle.on('click', function() {
+                dropdownMenu.toggleClass('show');
+            });
+            
+            // Close dropdown when clicking outside
+            $(document).on('click', function(e) {
+                if (!dropdown.is(e.target) && dropdown.has(e.target).length === 0) {
+                    dropdownMenu.removeClass('show');
+                }
+            });
+            
+            // Select an option
+            dropdownItems.on('click', function() {
+                const value = $(this).data('value');
+                const text = $(this).find('span').text().trim();
+                
+                // Update hidden input value
+                hiddenInput.val(value);
+                
+                // Update selected text
+                selectedOption.text(text).removeClass('placeholder-text');
+                
+                // Show avatar in dropdown toggle
+                dropdownAvatar.removeClass('d-none');
+                
+                // Highlight selected item
+                dropdownItems.removeClass('selected');
+                $(this).addClass('selected');
+                
+                // Close dropdown
+                dropdownMenu.removeClass('show');
+            });
+        });
+    </script>
 </body>
 </html> 

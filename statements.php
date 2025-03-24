@@ -269,6 +269,24 @@ $accounts = $stmt->fetchAll();
                 text-align: center;
             }
         }
+
+        .daterange {
+            cursor: pointer;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid #dee2e6;
+        }
+        
+        /* Footer styles */
+        footer {
+            background: var(--white);
+            padding: 15px 0;
+            margin-top: auto;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -403,7 +421,13 @@ $accounts = $stmt->fetchAll();
         </div>
     </div>
     
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Additional scripts for daterangepicker -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Handle statement option selection

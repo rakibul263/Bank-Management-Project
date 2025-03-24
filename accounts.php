@@ -223,16 +223,10 @@ $accounts = $stmt->fetchAll();
 
         /* Account Balance Styling */
         .account-balance {
-            font-size: 24px;
-            font-weight: bold;
-            padding: 15px;
-            color: white;
-            background: var(--primary-gradient);
-            border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            text-align: center;
-            margin: 15px 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 10px 0;
         }
 
         .account-balance:hover {
@@ -329,6 +323,17 @@ $accounts = $stmt->fetchAll();
                 text-align: center;
             }
         }
+
+        /* Footer styles */
+        footer {
+            background: var(--white);
+            padding: 15px 0;
+            margin-top: auto;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -422,6 +427,9 @@ $accounts = $stmt->fetchAll();
             </div>
         </div>
     </div>
+    
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

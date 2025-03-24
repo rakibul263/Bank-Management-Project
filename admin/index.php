@@ -13,6 +13,12 @@ $stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");
 $stmt->execute([$_SESSION['admin_id']]);
 $current_admin = $stmt->fetch();
 
+// Check for permission error
+$permission_error = '';
+if (isset($_GET['error']) && $_GET['error'] === 'permission') {
+    $permission_error = 'You do not have permission to access the requested page. Please contact the administrator if you believe this is an error.';
+}
+
 // Get statistics
 $stats = [
     'total_users' => $conn->query("SELECT COUNT(*) FROM users")->fetchColumn(),
@@ -360,6 +366,14 @@ $pending_loans = $stmt->fetchAll();
 
     <!-- Main Content -->
     <div class="main-content">
+        <?php if ($permission_error): ?>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Access Denied:</strong> <?php echo $permission_error; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <?php endif; ?>
+        
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
             <button onclick="window.location.reload()" class="btn btn-primary refresh-btn">

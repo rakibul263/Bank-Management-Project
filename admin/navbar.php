@@ -8,6 +8,62 @@ if (!isset($current_admin) && isset($_SESSION['admin_id'])) {
     $stmt->execute([$_SESSION['admin_id']]);
     $current_admin = $stmt->fetch();
 }
+
+// Check if role column exists in admins table
+$role_column_exists = false;
+try {
+    $stmt = $conn->prepare("SHOW COLUMNS FROM admins LIKE 'role'");
+    $stmt->execute();
+    $role_column_exists = $stmt->rowCount() > 0;
+} catch (PDOException $e) {
+    // Column doesn't exist or there was an error
+}
+
+// Define admin role permissions
+$admin_permissions = [
+    'super_admin' => ['all'],
+    'user_manager' => ['users.php', 'pending_users.php'],
+    'account_manager' => ['accounts.php', 'withdrawals.php'],
+    'loan_manager' => ['loans.php'],
+    'transaction_manager' => ['transactions.php']
+];
+
+// Get admin role
+$admin_role = 'user_manager'; // Default role
+if ($role_column_exists && isset($current_admin['role'])) {
+    $admin_role = $current_admin['role'];
+} elseif (isset($current_admin) && $current_admin['username'] === 'admin') {
+    $admin_role = 'super_admin';
+}
+
+// Function to check if admin has permission to access a page
+function has_permission($page, $role, $permissions) {
+    if ($role === 'super_admin' || in_array('all', $permissions[$role])) {
+        return true;
+    }
+    return in_array($page, $permissions[$role]);
+}
+
+// Check if is_approved column exists in users table
+$column_exists = false;
+try {
+    $stmt = $conn->prepare("SHOW COLUMNS FROM users LIKE 'is_approved'");
+    $stmt->execute();
+    $column_exists = $stmt->rowCount() > 0;
+} catch (PDOException $e) {
+    // Column doesn't exist or there was an error
+}
+
+// Get pending users count if the column exists
+if (!isset($pending_user_count)) {
+    if ($column_exists) {
+        $stmt = $conn->prepare("SELECT COUNT(*) FROM users WHERE is_approved = 'pending'");
+        $stmt->execute();
+        $pending_user_count = $stmt->fetchColumn();
+    } else {
+        $pending_user_count = 0;
+    }
+}
 ?>
 <!-- Sleek Modern Navbar -->
 <nav class="admin-navbar navbar navbar-expand-lg">
@@ -27,24 +83,49 @@ if (!isset($current_admin) && isset($_SESSION['admin_id'])) {
                         <span>Dashboard</span>
                     </a>
                 </li>
+                
+                <?php if (has_permission('users.php', $admin_role, $admin_permissions)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'users.php') ? 'active' : ''; ?>" href="users.php">
                         <i class="bi bi-people-fill"></i>
                         <span>Users</span>
                     </a>
                 </li>
+                <?php endif; ?>
+                
+                <?php if ($column_exists && file_exists(__DIR__ . '/pending_users.php') && has_permission('pending_users.php', $admin_role, $admin_permissions)): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo ($current_page == 'pending_users.php') ? 'active' : ''; ?>" href="pending_users.php">
+                        <i class="bi bi-person-check-fill"></i>
+                        <span>Pending Users</span>
+                        <?php if (isset($pending_user_count) && $pending_user_count > 0): ?>
+                        <span class="badge-notification">
+                            <?php echo $pending_user_count; ?>
+                        </span>
+                        <?php endif; ?>
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <?php if (has_permission('accounts.php', $admin_role, $admin_permissions)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'accounts.php') ? 'active' : ''; ?>" href="accounts.php">
                         <i class="bi bi-safe2-fill"></i>
                         <span>Accounts</span>
                     </a>
                 </li>
+                <?php endif; ?>
+                
+                <?php if (has_permission('transactions.php', $admin_role, $admin_permissions)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'transactions.php') ? 'active' : ''; ?>" href="transactions.php">
                         <i class="bi bi-arrow-left-right"></i>
                         <span>Transactions</span>
                     </a>
                 </li>
+                <?php endif; ?>
+                
+                <?php if (has_permission('loans.php', $admin_role, $admin_permissions)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'loans.php') ? 'active' : ''; ?>" href="loans.php">
                         <i class="bi bi-cash-coin"></i>
@@ -56,6 +137,9 @@ if (!isset($current_admin) && isset($_SESSION['admin_id'])) {
                         <?php endif; ?>
                     </a>
                 </li>
+                <?php endif; ?>
+                
+                <?php if (has_permission('withdrawals.php', $admin_role, $admin_permissions)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'withdrawals.php') ? 'active' : ''; ?>" href="withdrawals.php">
                         <i class="bi bi-cash-stack"></i>
@@ -67,7 +151,9 @@ if (!isset($current_admin) && isset($_SESSION['admin_id'])) {
                         <?php endif; ?>
                     </a>
                 </li>
-                <?php if (isset($current_admin) && $current_admin['username'] === 'admin'): ?>
+                <?php endif; ?>
+                
+                <?php if ($admin_role === 'super_admin' || (isset($current_admin) && $current_admin['username'] === 'admin')): ?>
                 <li class="nav-item">
                     <a class="nav-link <?php echo ($current_page == 'create_admin.php') ? 'active' : ''; ?>" href="create_admin.php">
                         <i class="bi bi-person-plus-fill"></i>

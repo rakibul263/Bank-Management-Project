@@ -1,0 +1,18 @@
+/* Footer styles */
+footer {
+    background: var(--white, #ffffff);
+    padding: 15px 0;
+    margin-top: auto;
+    text-align: center;
+    color: var(--text-secondary, #6c757d);
+    font-size: 0.9rem;
+    box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+}
+
+footer p {
+    margin-bottom: 2px;
+}
+
+footer small {
+    font-size: 0.8rem;
+} 

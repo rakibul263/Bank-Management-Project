@@ -2,16 +2,29 @@
 require_once '../config.php';
 require_once '../includes/functions.php';
 
-// Check if admin is logged in
-if (!isset($_SESSION['admin_id'])) {
-    header('Location: login.php');
-    exit();
-}
+// Check if admin is logged in and has permission to access this page
+$current_page = basename($_SERVER['SCRIPT_NAME']);
+require_admin_permission($current_page);
 
 // Get current admin info
 $stmt = $conn->prepare("SELECT * FROM admins WHERE id = ?");
 $stmt->execute([$_SESSION['admin_id']]);
 $current_admin = $stmt->fetch();
+
+// Check if admin_notifications table exists and has user_id column
+$admin_notifications_exists = false;
+try {
+    $stmt = $conn->prepare("SHOW TABLES LIKE 'admin_notifications'");
+    $stmt->execute();
+    if ($stmt->rowCount() > 0) {
+        $stmt = $conn->prepare("DESCRIBE admin_notifications");
+        $stmt->execute();
+        $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $admin_notifications_exists = in_array('user_id', $columns);
+    }
+} catch (PDOException $e) {
+    // Table doesn't exist or there was an error
+}
 
 $error = '';
 $success = '';
@@ -58,27 +71,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
     
     try {
         // Check if user has any accounts with balance
-        $stmt = $conn->prepare("SELECT COUNT(*) FROM accounts WHERE user_id = ? AND balance > 0");
+        $stmt = $conn->prepare("SELECT id, account_number, account_type, balance FROM accounts WHERE user_id = ? AND balance > 0");
         $stmt->execute([$user_id]);
-        if ($stmt->fetchColumn() > 0) {
-            $error = 'Cannot delete user with active accounts containing balance';
-        } else {
-            // Delete user's accounts first
-            $stmt = $conn->prepare("DELETE FROM accounts WHERE user_id = ?");
+        $accounts_with_balance = $stmt->fetchAll();
+        
+        if (count($accounts_with_balance) > 0) {
+            // Get user information for better error message
+            $stmt = $conn->prepare("SELECT full_name FROM users WHERE id = ?");
             $stmt->execute([$user_id]);
+            $user_details = $stmt->fetch();
+            
+            // Create detailed error message
+            $error = "Cannot delete user <strong>" . htmlspecialchars($user_details['full_name']) . "</strong> because they have accounts with balance:<ul>";
+            
+            foreach ($accounts_with_balance as $account) {
+                $error .= "<li>Account #" . htmlspecialchars($account['account_number']) . " (" . ucfirst($account['account_type']) . ") - Balance: $" . format_currency($account['balance']) . "</li>";
+            }
+            
+            $error .= "</ul><div class='mt-3'><a href='?view=" . $user_id . "' class='btn btn-sm btn-info'><i class='bi bi-info-circle'></i> View User Details</a></div>";
+        } else {
+            // Delete related data first (to avoid foreign key constraints)
+            // Begin transaction for safety
+            $conn->beginTransaction();
+            
+            // Delete any notifications related to the user first (foreign key constraint)
+            if ($admin_notifications_exists) {
+                $stmt = $conn->prepare("DELETE FROM admin_notifications WHERE user_id = ?");
+                $stmt->execute([$user_id]);
+            }
+            
+            // Delete from withdrawal_requests
+            $stmt = $conn->prepare("DELETE FROM withdrawal_requests WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)");
+            $stmt->execute([$user_id]);
+            
+            // Delete from transactions 
+            $stmt = $conn->prepare("DELETE FROM transactions WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)");
+            $stmt->execute([$user_id]);
+            
+            // Delete from transfers (both as sender and receiver)
+            $stmt = $conn->prepare("DELETE FROM transfers WHERE from_account_id IN (SELECT id FROM accounts WHERE user_id = ?) OR to_account_id IN (SELECT id FROM accounts WHERE user_id = ?)");
+            $stmt->execute([$user_id, $user_id]);
             
             // Delete user's loans
             $stmt = $conn->prepare("DELETE FROM loans WHERE user_id = ?");
             $stmt->execute([$user_id]);
             
-            // Delete user
+            // Delete user's accounts
+            $stmt = $conn->prepare("DELETE FROM accounts WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            
+            // Finally delete the user
             $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
             $stmt->execute([$user_id]);
             
-            $success = 'User deleted successfully!';
+            // Commit the transaction
+            $conn->commit();
+            
+            $success = 'User and all related data deleted successfully!';
         }
     } catch (PDOException $e) {
-        $error = 'Failed to delete user. Please try again.';
+        // If there's an error, rollback
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        $error = 'Failed to delete user: ' . $e->getMessage();
     }
 }
 
@@ -422,7 +478,7 @@ $users = $stmt->fetchAll();
         
         <?php if ($error): ?>
             <div class="alert alert-danger">
-                <i class="bi bi-exclamation-circle"></i> <?php echo $error; ?>
+                <i class="bi bi-exclamation-circle me-2"></i><?php echo $error; ?>
             </div>
         <?php endif; ?>
         
@@ -437,9 +493,16 @@ $users = $stmt->fetchAll();
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0"><i class="bi bi-person-circle"></i> User Details</h5>
-                    <a href="users.php" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Back to List
-                    </a>
+                    <div>
+                        <a href="users.php" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to List
+                        </a>
+                        <?php if (empty($user_accounts)): ?>
+                        <button type="button" class="btn btn-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteUserModal" data-userid="<?php echo $user_details['id']; ?>" data-username="<?php echo htmlspecialchars($user_details['full_name']); ?>">
+                            <i class="bi bi-trash"></i> Delete User
+                        </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -576,12 +639,9 @@ $users = $stmt->fetchAll();
                                         <a href="?view=<?php echo $user['id']; ?>" class="btn btn-sm btn-primary">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <form method="POST" action="" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                            <input type="hidden" name="user_id" value="<?php echo $user['id']; ?>">
-                                            <button type="submit" name="delete_user" class="btn btn-sm btn-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" data-userid="<?php echo $user['id']; ?>" data-username="<?php echo htmlspecialchars($user['full_name']); ?>">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -654,6 +714,60 @@ $users = $stmt->fetchAll();
         </div>
     </div>
     
+    <!-- Delete User Confirmation Modal -->
+    <div class="modal fade" id="deleteUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirm User Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete user <strong id="userNameToDelete"></strong>?</p>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle"></i> This action will:
+                        <ul class="mb-0 mt-2">
+                            <li>Remove all withdrawal requests</li>
+                            <li>Remove all transactions and transfers</li>
+                            <li>Remove all loans</li>
+                            <li>Remove all accounts</li>
+                            <li>Remove any notifications</li>
+                            <li>Permanently delete the user</li>
+                        </ul>
+                    </div>
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i> This action cannot be undone!
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="" id="deleteUserForm">
+                        <input type="hidden" name="user_id" id="userIdToDelete" value="">
+                        <button type="submit" name="delete_user" class="btn btn-danger">
+                            <i class="bi bi-trash"></i> Delete User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set up delete user modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const deleteUserModal = document.getElementById('deleteUserModal');
+            if (deleteUserModal) {
+                deleteUserModal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const userId = button.getAttribute('data-userid');
+                    const userName = button.getAttribute('data-username');
+                    
+                    document.getElementById('userIdToDelete').value = userId;
+                    document.getElementById('userNameToDelete').textContent = userName;
+                });
+            }
+        });
+    </script>
 </body>
 </html> 

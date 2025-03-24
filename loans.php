@@ -355,6 +355,17 @@ $loan_history = $stmt->fetchAll();
                 justify-content: space-between;
             }
         }
+
+        /* Footer styles */
+        footer {
+            background: var(--white);
+            padding: 15px 0;
+            margin-top: auto;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -500,6 +511,11 @@ $loan_history = $stmt->fetchAll();
             </div>
         </div>
     </div>
+    
+    </div>
+    
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -417,6 +417,22 @@ $transactions = $stmt->fetchAll();
         .sort-btn:not(.active):hover {
             background: rgba(255, 255, 255, 0.3);
         }
+
+        .pagination .page-link:hover {
+            background-color: rgba(58, 123, 213, 0.1);
+            border-color: rgba(58, 123, 213, 0.2);
+        }
+        
+        /* Footer styles */
+        footer {
+            background: var(--white);
+            padding: 15px 0;
+            margin-top: auto;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            box-shadow: 0 -2px 15px rgba(0, 0, 0, 0.05);
+        }
     </style>
 </head>
 <body>
@@ -621,6 +637,9 @@ $transactions = $stmt->fetchAll();
         </div>
     </div>
     -->
+    
+    <!-- Footer -->
+    <?php include 'includes/footer.php'; ?>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
