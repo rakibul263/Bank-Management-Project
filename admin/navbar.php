@@ -141,14 +141,12 @@ if (!isset($pending_user_count)) {
                 
                 <?php if (has_permission('withdrawals.php', $admin_role, $admin_permissions)): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo ($current_page == 'withdrawals.php') ? 'active' : ''; ?>" href="withdrawals.php">
+                    <a class="nav-link <?php echo ($current_page == 'withdrawals.php') ? 'active' : ''; ?>" href="withdrawals.php<?php echo (isset($pending_withdrawal_count) && $pending_withdrawal_count > 0) ? '#pending-withdrawals' : ''; ?>">
                         <i class="bi bi-cash-stack"></i>
                         <span>Withdrawals</span>
-                        <?php if (isset($pending_withdrawal_count) && $pending_withdrawal_count > 0): ?>
-                        <span class="badge-notification">
-                            <?php echo $pending_withdrawal_count; ?>
+                        <span class="badge-notification" id="withdrawal-badge" style="display: none;" data-bs-toggle="tooltip" data-bs-placement="right" title="Pending withdrawals awaiting your approval">
+                            0
                         </span>
-                        <?php endif; ?>
                     </a>
                 </li>
                 <?php endif; ?>
@@ -370,4 +368,87 @@ if (!isset($pending_user_count)) {
             padding: 1.2rem;
         }
     }
-</style> 
+
+    /* Enhanced Badge Notification Style */
+    .badge-notification {
+        position: absolute;
+        top: 10px;
+        right: 5px;
+        background-color: #FF5757;
+        color: white;
+        border-radius: 50%;
+        min-width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        padding: 0 5px;
+        border: 2px solid white;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .nav-link:hover .badge-notification {
+        transform: scale(1.2);
+        background-color: #ff3535;
+    }
+    
+    /* Tooltip styling */
+    .tooltip {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 0.85rem;
+    }
+    
+    .tooltip-inner {
+        background-color: #1a2942;
+        box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+        padding: 8px 12px;
+    }
+    
+    .bs-tooltip-end .tooltip-arrow::before {
+        border-right-color: #1a2942;
+    }
+</style>
+
+<!-- Initialize tooltips with JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Function to check for new withdrawal requests
+        function checkWithdrawals() {
+            fetch('check_withdrawals.php')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('withdrawal-badge');
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'flex';
+                        
+                        // If there are new requests and the badge was previously hidden, play notification sound
+                        if (data.has_new && badge.style.display === 'none') {
+                            const notificationSound = new Audio('data:audio/wav;base64,UklGRiQDAABXQVZFZm10IBAAAAABAAEAESsAABErAAABAAgAZGF0YQADAACBhYqFbF1fZHB3EhgICRAX2dTj6e4FBwwQEAwKCggIBQcIBgUICgYFFw4HoZBuRDo0NT1Wg8aZdXJ6f5KUnJ6Vl56hi2piVEg+Pj1APDh+cVEzHxYaJEF9lmNKR05aZWlbV1pmdINfUVJUU05LSEFAQG1PIxsRDhckVY9qQDk9SVZSTUFBUmZyW1RYXmBdVk1JSkxRTDkpHxwkM1d9aTgzPlRfa2VaXGVwdGlna3F1b2NVTkxEODIzSWxZPDAnKDhLeJ2Be2UzIhseQWp/ZUw9QFBea1M8Oj1BWl1MRkpYX1pQQ0ZFTEU9ODrQvoVZTkhDPz9EZI2HbVtPTFBaY2phUkVAPEBGSEE3RlRXTD84Njs8NjY5bVwwHRQQGCtQbWJXU1deZGZbRzs5QE1cXlJMTlZZUEQ5Njg6NC80Tos1DwkHDBxCU0dBPz9JV2tVPTc4RE5dXFNMUltgVkIzMDA0L0hlVDceFhYeKDY2MjEzOUVWXVJEPT5GUFxhU0pOW2JcSz0xMDIxaFMlCwQECRY1TUU5MzU9TFtmWEc/QEhWYGBTRElWYF1RQDUyMjNAPDMwe2E6IRcWGiU2UldXU1ZebXaRkHNeXXCEf2xobnuKhHBmZ25pX2NmaAkHBwwRGzlPV1peZnWRp7qbVEAxNUBIRj46PkJGTVBXUEIvGwVLcmlSSDo6RFFQTFRqgIuOf3dvT0xGNkkZF0ZALURcbHuEdnl/gHprYl5ZOSsqtK6TeX6JoaSflZmTcGiZkZZyWF1JMSwpJzxHGRM5HSI+aYc8FiMcBCc/Mjk8R15xRiwrO3B7TDg5LnJaJDAyKR00UlhZNjM1Sk0jEBEePWdeZ1slLVDh3aVaTExHRlJcd4lpPCgzYX0xFSNFNB0VIy0xVV1JRnFdLiUoIiUcGzE8bTA=');
+                            notificationSound.volume = 0.3;
+                            notificationSound.play().catch(e => console.log('Audio play failed:', e));
+                        }
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(error => console.error('Error checking withdrawals:', error));
+        }
+
+        // Check immediately when page loads
+        checkWithdrawals();
+
+        // Check every 30 seconds
+        setInterval(checkWithdrawals, 30000);
+    });
+</script> 

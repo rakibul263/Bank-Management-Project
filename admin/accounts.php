@@ -54,6 +54,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_account'])) {
     $account_id = (int)$_POST['account_id'];
     
     try {
+        // Begin transaction for safety
+        $conn->beginTransaction();
+        
         // First check if account exists
         $stmt = $conn->prepare("SELECT balance FROM accounts WHERE id = ?");
         $stmt->execute([$account_id]);
@@ -61,10 +64,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_account'])) {
         
         if (!$account) {
             $error = 'Account not found';
+            $conn->rollBack();
         } elseif ($account['balance'] > 0) {
             $error = 'Cannot delete account with balance';
+            $conn->rollBack();
         } else {
-            // First delete related transactions
+            // First delete related records from all tables that reference account_id
+            
+            // Delete from withdrawal_requests
+            $stmt = $conn->prepare("DELETE FROM withdrawal_requests WHERE account_id = ?");
+            $stmt->execute([$account_id]);
+            
+            // Delete from loans
+            $stmt = $conn->prepare("DELETE FROM loans WHERE account_id = ?");
+            $stmt->execute([$account_id]);
+            
+            // Delete from transfers (both as sender and receiver)
+            $stmt = $conn->prepare("DELETE FROM transfers WHERE from_account_id = ? OR to_account_id = ?");
+            $stmt->execute([$account_id, $account_id]);
+            
+            // Delete related transactions
             $stmt = $conn->prepare("DELETE FROM transactions WHERE account_id = ?");
             $stmt->execute([$account_id]);
             
@@ -74,15 +93,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_account'])) {
             
             if ($stmt->rowCount() > 0) {
                 $success = 'Account deleted successfully!';
+                $conn->commit();
                 // Redirect to refresh the page and prevent form resubmission
                 header('Location: accounts.php?success=deleted');
                 exit();
             } else {
                 $error = 'Failed to delete account';
+                $conn->rollBack();
             }
         }
     } catch (PDOException $e) {
-        $error = 'Failed to delete account. Please try again.';
+        $conn->rollBack();
+        $error = 'Failed to delete account. Error: ' . $e->getMessage();
     }
 }
 

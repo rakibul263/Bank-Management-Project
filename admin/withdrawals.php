@@ -16,6 +16,21 @@ $current_admin = $stmt->fetch();
 $error = '';
 $success = '';
 
+// Get notification for new withdrawal requests for this admin
+$stmt = $conn->prepare("
+    SELECT COUNT(*) as count, MAX(created_at) as latest 
+    FROM withdrawal_requests 
+    WHERE admin_id = ? AND status = 'pending'
+");
+$stmt->execute([$_SESSION['admin_id']]);
+$notification = $stmt->fetch();
+$pending_requests_count = $notification['count'];
+$latest_request_time = $notification['latest'] ? strtotime($notification['latest']) : 0;
+$has_new_requests = $pending_requests_count > 0 && (time() - $latest_request_time < 86400); // 86400 seconds = 24 hours
+
+// Make the pending withdrawal count available to the navbar
+$pending_withdrawal_count = $pending_requests_count;
+
 // Handle withdrawal request approval/rejection
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['request_id'])) {
     $request_id = (int)$_POST['request_id'];
@@ -277,7 +292,7 @@ $withdrawal_requests = $stmt->fetchAll();
             </div>
             
             <!-- Withdrawal Requests Table -->
-            <div class="card">
+            <div class="card" id="pending-withdrawals">
                 <div class="card-header">
                     <h5 class="card-title"><i class="bi bi-cash me-2"></i>Withdrawal Requests</h5>
                 </div>
@@ -303,7 +318,7 @@ $withdrawal_requests = $stmt->fetchAll();
                                 </thead>
                                 <tbody>
                                     <?php foreach ($withdrawal_requests as $request): ?>
-                                        <tr>
+                                        <tr data-status="<?php echo $request['status']; ?>" data-admin-id="<?php echo $request['admin_id']; ?>">
                                             <td>#<?php echo $request['id']; ?></td>
                                             <td><?php echo date('d M Y H:i', strtotime($request['created_at'])); ?></td>
                                             <td><?php echo htmlspecialchars($request['user_name']); ?></td>
@@ -347,5 +362,59 @@ $withdrawal_requests = $stmt->fetchAll();
     
     <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Notification Sound and JavaScript -->
+    <?php if ($has_new_requests): ?>
+    <script>
+        // Check if this is the first time we're showing the notification (using sessionStorage)
+        if (!sessionStorage.getItem('withdrawal_notification_shown_<?php echo date("Y-m-d"); ?>')) {
+            // Play notification sound - create a subtle notification sound
+            const notificationSound = new Audio('data:audio/wav;base64,UklGRiQDAABXQVZFZm10IBAAAAABAAEAESsAABErAAABAAgAZGF0YQADAACBhYqFbF1fZHB3EhgICRAX2dTj6e4FBwwQEAwKCggIBQcIBgUICgYFFw4HoZBuRDo0NT1Wg8aZdXJ6f5KUnJ6Vl56hi2piVEg+Pj1APDh+cVEzHxYaJEF9lmNKR05aZWlbV1pmdINfUVJUU05LSEFAQG1PIxsRDhckVY9qQDk9SVZSTUFBUmZyW1RYXmBdVk1JSkxRTDkpHxwkM1d9aTgzPlRfa2VaXGVwdGlna3F1b2NVTkxEODIzSWxZPDAnKDhLeJ2Be2UzIhseQWp/ZUw9QFBea1M8Oj1BWl1MRkpYX1pQQ0ZFTEU9ODrQvoVZTkhDPz9EZI2HbVtPTFBaY2phUkVAPEBGSEE3RlRXTD84Njs8NjY5bVwwHRQQGCtQbWJXU1deZGZbRzs5QE1cXlJMTlZZUEQ5Njg6NC80Tos1DwkHDBxCU0dBPz9JV2tVPTc4RE5dXFNMUltgVkIzMDA0L0hlVDceFhYeKDY2MjEzOUVWXVJEPT5GUFxhU0pOW2JcSz0xMDIxaFMlCwQECRY1TUU5MzU9TFtmWEc/QEhWYGBTRElWYF1RQDUyMjNAPDMwe2E6IRcWGiU2UldXU1ZebXaRkHNeXXCEf2xobnuKhHBmZ25pX2NmaAkHBwwRGzlPV1peZnWRp7qbVEAxNUBIRj46PkJGTVBXUEIvGwVLcmlSSDo6RFFQTFRqgIuOf3dvT0xGNkkZF0ZALURcbHuEdnl/gHprYl5ZOSsqtK6TeX6JoaSflZmTcGiZkZZyWF1JMSwpJzxHGRM5HSI+aYc8FiMcBCc/Mjk8R15xRiwrO3B7TDg5LnJaJDAyKR00UlhZNjM1Sk0jEBEePWdeZ1slLVDh3aVaTExHRlJcd4lpPCgzYX0xFSNFNB0VIy0xVV1JRnFdLiUoIiUcGzE8bTA=');
+            notificationSound.volume = 0.3; // Set volume to 30%
+            notificationSound.play().catch(e => console.log('Audio play failed:', e));
+            
+            // Mark as shown
+            sessionStorage.setItem('withdrawal_notification_shown_<?php echo date("Y-m-d"); ?>', 'true');
+            
+            // Animate the navbar notification badge
+            const navWithdrawalBadge = document.querySelector('.nav-link[href="withdrawals.php"] .badge-notification');
+            if (navWithdrawalBadge) {
+                navWithdrawalBadge.classList.add('pulse-animation');
+            }
+        }
+        
+        // Highlight pending withdrawals that need attention
+        document.addEventListener('DOMContentLoaded', () => {
+            const pendingRows = document.querySelectorAll('tr[data-status="pending"][data-admin-id="<?php echo $_SESSION['admin_id']; ?>"]');
+            pendingRows.forEach(row => {
+                row.classList.add('table-warning');
+                row.classList.add('animate__animated');
+                row.classList.add('animate__pulse');
+            });
+            
+            // Add scroll into view for pending requests if coming from navbar
+            if (window.location.hash === '#pending-withdrawals') {
+                document.getElementById('pending-withdrawals').scrollIntoView();
+            }
+        });
+    </script>
+    
+    <!-- Add styles for navbar notification badge animation -->
+    <style>
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse-animation {
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.7);
+        }
+    </style>
+    
+    <!-- Add animate.css for subtle animation effects -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <?php endif; ?>
 </body>
 </html> 

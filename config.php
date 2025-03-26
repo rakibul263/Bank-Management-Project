@@ -6,7 +6,7 @@ define('DB_PASS', 'rakibul263'); // Empty password for local development
 define('DB_NAME', 'banking_system');
 
 // Application configuration
-define('SITE_NAME', 'Secure Banking System');
+define('SITE_NAME', 'Daffodil Banking System');
 define('SITE_URL', 'http://localhost:8000');
 
 // Security configuration

@@ -111,7 +111,8 @@ function create_withdrawal_request($account_id, $admin_id, $amount, $description
             return false;
         }
         
-        // Create a withdrawal request
+        // Create a withdrawal request - but DON'T deduct the money yet
+        // Money will be deducted only when admin approves
         $stmt = $conn->prepare("INSERT INTO withdrawal_requests (account_id, admin_id, amount, description) 
                                VALUES (?, ?, ?, ?)");
         $result = $stmt->execute([$account_id, $admin_id, $amount, $description]);
@@ -130,7 +131,7 @@ function process_withdrawal_request($request_id, $status, $admin_id) {
         $conn->beginTransaction();
         
         // Get the withdrawal request
-        $stmt = $conn->prepare("SELECT * FROM withdrawal_requests WHERE id = ?");
+        $stmt = $conn->prepare("SELECT * FROM withdrawal_requests WHERE id = ? AND status = 'pending'");
         $stmt->execute([$request_id]);
         $request = $stmt->fetch();
         
@@ -143,18 +144,19 @@ function process_withdrawal_request($request_id, $status, $admin_id) {
         $stmt = $conn->prepare("UPDATE withdrawal_requests SET status = ?, processed_at = NOW() WHERE id = ?");
         $stmt->execute([$status, $request_id]);
         
-        // If approved, create a transaction and update balance directly (without using create_transaction)
+        // If approved, create a transaction and update balance
         if ($status === 'approved') {
             $account_id = $request['account_id'];
             $amount = $request['amount'];
-            $description = 'Withdrawal approved by admin ID: ' . $admin_id;
+            $description = 'Withdrawal approved by admin ID: ' . $admin_id . ' (Request ID: ' . $request_id . ')';
             
             // Get current balance
             $current_balance = get_account_balance($account_id);
             $new_balance = $current_balance - $amount;
             
-            // Insert transaction record
-            $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) VALUES (?, 'withdrawal', ?, ?, ?)");
+            // Create transaction record
+            $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) 
+                                   VALUES (?, 'withdrawal', ?, ?, ?)");
             $stmt->execute([$account_id, $amount, $new_balance, $description]);
             
             // Update account balance
