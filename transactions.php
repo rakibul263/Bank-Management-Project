@@ -50,6 +50,7 @@ $type_filter = isset($_GET['type']) ? sanitize_input($_GET['type']) : null;
 $date_from = isset($_GET['date_from']) ? sanitize_input($_GET['date_from']) : null;
 $date_to = isset($_GET['date_to']) ? sanitize_input($_GET['date_to']) : null;
 $sort_order = isset($_GET['sort']) ? sanitize_input($_GET['sort']) : 'DESC'; // Default to DESC
+$search_query = isset($_GET['search']) ? sanitize_input($_GET['search']) : null;
 
 $query = "
     SELECT t.*, a.account_number, a.account_type 
@@ -77,6 +78,13 @@ if ($date_from) {
 if ($date_to) {
     $query .= " AND DATE(t.created_at) <= ?";
     $params[] = $date_to;
+}
+
+if ($search_query) {
+    $query .= " AND (t.description LIKE ? OR CAST(t.amount AS CHAR) LIKE ?)";
+    $search_param = "%{$search_query}%";
+    $params[] = $search_param;
+    $params[] = $search_param;
 }
 
 // Add sorting
@@ -499,6 +507,16 @@ $transactions = $stmt->fetchAll();
                         <label for="date_to" class="form-label">Date To</label>
                         <input type="date" class="form-control" id="date_to" name="date_to" value="<?php echo $date_to; ?>">
                     </div>
+
+                    <div class="col-md-12">
+                        <label for="search" class="form-label">Search</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="search" name="search" placeholder="Search by description or amount..." value="<?php echo htmlspecialchars($search_query ?? ''); ?>">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
                     
                     <div class="col-12 d-flex justify-content-end">
                         <a href="transactions.php" class="btn btn-secondary me-2">
@@ -569,7 +587,7 @@ $transactions = $stmt->fetchAll();
                                 <div class="text-end">
                                     <span class="transaction-amount <?php echo $transaction['transaction_type'] === 'deposit' ? 'deposit' : 'withdraw'; ?>">
                                         <?php echo $transaction['transaction_type'] === 'deposit' ? '+' : '-'; ?>
-                                        $<?php echo format_currency($transaction['amount']); ?>
+                                        ৳<?php echo format_currency($transaction['amount']); ?>
                                     </span>
                                     <br>
                                     <small class="transaction-date">
@@ -618,7 +636,7 @@ $transactions = $stmt->fetchAll();
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
                             </div>
                         </div>
