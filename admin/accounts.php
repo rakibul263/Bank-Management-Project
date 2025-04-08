@@ -16,6 +16,32 @@ $current_admin = $stmt->fetch();
 $error = '';
 $success = '';
 
+// Get search parameter
+$search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
+
+// Build the query for accounts
+$query = "
+    SELECT a.*, u.full_name, u.email 
+    FROM accounts a
+    JOIN users u ON a.user_id = u.id
+    WHERE 1=1
+";
+$params = [];
+
+// Add search filter
+if ($search) {
+    $query .= " AND (u.full_name LIKE ? OR u.email LIKE ? OR a.account_number LIKE ? OR a.account_type LIKE ?)";
+    $search_param = "%$search%";
+    $params = array_merge($params, [$search_param, $search_param, $search_param, $search_param]);
+}
+
+$query .= " ORDER BY a.created_at DESC";
+
+// Execute query
+$stmt = $conn->prepare($query);
+$stmt->execute($params);
+$accounts = $stmt->fetchAll();
+
 // Handle account creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_account'])) {
     $user_id = (int)$_POST['user_id'];
@@ -159,15 +185,6 @@ if (isset($_GET['view'])) {
 // Get all users for the account creation form
 $stmt = $conn->query("SELECT id, username, full_name, email FROM users ORDER BY full_name");
 $users = $stmt->fetchAll();
-
-// Get all accounts for the list
-$stmt = $conn->query("
-    SELECT a.*, u.full_name, u.email 
-    FROM accounts a
-    JOIN users u ON a.user_id = u.id
-    ORDER BY a.created_at DESC
-");
-$accounts = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -263,7 +280,7 @@ $accounts = $stmt->fetchAll();
             padding: 2rem;
         }
         
-        /* Card Styles */
+        /* Modern Card Styles */
         .card {
             border: none;
             border-radius: 1rem;
@@ -310,7 +327,7 @@ $accounts = $stmt->fetchAll();
             margin: 0;
         }
         
-        /* Table Styles */
+        /* Enhanced Table Styles */
         .table {
             margin-bottom: 0;
         }
@@ -350,7 +367,7 @@ $accounts = $stmt->fetchAll();
             color: var(--primary-color);
         }
         
-        /* Button Styles */
+        /* Modern Button Styles */
         .btn {
             border-radius: 0.5rem;
             padding: 0.5rem 1.25rem;
@@ -393,7 +410,7 @@ $accounts = $stmt->fetchAll();
             background: linear-gradient(45deg, #6f42c1, var(--primary-color));
         }
         
-        /* Form Styles */
+        /* Enhanced Form Styles */
         .form-control, .form-select {
             border-radius: 0.5rem;
             border: 2px solid #e1e1e1;
@@ -489,6 +506,41 @@ $accounts = $stmt->fetchAll();
             background: rgba(78,115,223,0.2);
         }
         
+        /* Search Container Styles */
+        .search-container {
+            width: 300px;
+        }
+        
+        .search-container .input-group {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-container .input-group-text {
+            color: #6c757d;
+            background-color: #f8f9fa;
+        }
+        
+        .search-container .form-control {
+            border-left: none;
+            padding-left: 0;
+        }
+        
+        .search-container .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+        
+        /* Highlight Styles */
+        .highlight {
+            background-color: #fff3cd;
+            padding: 0 2px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        
+        /* Responsive Styles */
         @media (max-width: 768px) {
             .navbar {
                 padding: 0.75rem 1rem;
@@ -501,6 +553,20 @@ $accounts = $stmt->fetchAll();
             
             .nav-link {
                 padding: 0.75rem 1rem;
+            }
+            
+            .search-container {
+                width: 100%;
+                margin-top: 1rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .table-responsive {
+                margin: 0 -1rem;
             }
         }
     </style>
@@ -630,8 +696,21 @@ $accounts = $stmt->fetchAll();
         <?php else: ?>
             <!-- Accounts List -->
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-list"></i> Accounts List</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="bi bi-bank"></i> Accounts List</h5>
+                    <div class="search-container">
+                        <form method="GET" class="d-flex">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" name="search" placeholder="Search accounts..." value="<?php echo htmlspecialchars($search); ?>">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -655,7 +734,13 @@ $accounts = $stmt->fetchAll();
                                             <div class="avatar bg-light rounded-circle p-2 me-2">
                                                 <i class="bi bi-person text-primary"></i>
                                             </div>
-                                            <?php echo htmlspecialchars($account['full_name']); ?>
+                                            <?php 
+                                            if ($search) {
+                                                echo preg_replace("/($search)/i", '<span class="highlight">$1</span>', htmlspecialchars($account['full_name']));
+                                            } else {
+                                                echo htmlspecialchars($account['full_name']);
+                                            }
+                                            ?>
                                         </div>
                                     </td>
                                     <td><?php echo ucfirst($account['account_type']); ?></td>

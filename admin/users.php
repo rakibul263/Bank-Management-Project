@@ -29,6 +29,27 @@ try {
 $error = '';
 $success = '';
 
+// Get search parameter
+$search = isset($_GET['search']) ? sanitize_input($_GET['search']) : '';
+
+// Build the query for users
+$query = "SELECT * FROM users WHERE 1=1";
+$params = [];
+
+// Add search filter
+if ($search) {
+    $query .= " AND (username LIKE ? OR email LIKE ? OR full_name LIKE ? OR phone LIKE ?)";
+    $search_param = "%$search%";
+    $params = array_merge($params, [$search_param, $search_param, $search_param, $search_param]);
+}
+
+$query .= " ORDER BY created_at DESC";
+
+// Execute query
+$stmt = $conn->prepare($query);
+$stmt->execute($params);
+$users = $stmt->fetchAll();
+
 // Handle user creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_user'])) {
     $username = sanitize_input($_POST['username']);
@@ -158,10 +179,6 @@ if (isset($_GET['view'])) {
         $user_loans = $stmt->fetchAll();
     }
 }
-
-// Get all users for the list
-$stmt = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
-$users = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -509,6 +526,67 @@ $users = $stmt->fetchAll();
                 padding: 0.75rem 1rem;
             }
         }
+        
+        .search-container {
+            width: 300px;
+        }
+        
+        .search-container .input-group {
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .search-container .input-group-text {
+            color: #6c757d;
+            background-color: #f8f9fa;
+        }
+        
+        .search-container .form-control {
+            border-left: none;
+            padding-left: 0;
+        }
+        
+        .search-container .form-control:focus {
+            box-shadow: none;
+            border-color: #ced4da;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 0 2px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
+        }
+        
+        .btn {
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
@@ -660,8 +738,21 @@ $users = $stmt->fetchAll();
         <?php else: ?>
             <!-- Users List -->
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-list"></i> Users List</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="bi bi-people"></i> Users List</h5>
+                    <div class="search-container">
+                        <form method="GET" class="d-flex">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" class="form-control border-start-0" name="search" placeholder="Search users..." value="<?php echo htmlspecialchars($search); ?>">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -679,7 +770,15 @@ $users = $stmt->fetchAll();
                             <tbody>
                                 <?php foreach ($users as $user): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($user['full_name']); ?></td>
+                                    <td>
+                                        <?php 
+                                        if ($search) {
+                                            echo preg_replace("/($search)/i", '<span class="highlight">$1</span>', htmlspecialchars($user['full_name']));
+                                        } else {
+                                            echo htmlspecialchars($user['full_name']);
+                                        }
+                                        ?>
+                                    </td>
                                     <td><?php echo htmlspecialchars($user['username']); ?></td>
                                     <td><?php echo htmlspecialchars($user['email']); ?></td>
                                     <td><?php echo htmlspecialchars($user['phone']); ?></td>
