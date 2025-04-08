@@ -41,7 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
         
         try {
             if (process_withdrawal_request($request_id, $status, $_SESSION['admin_id'])) {
-                $success = "Withdrawal request has been " . $status . " successfully!";
+                $_SESSION['success'] = "Withdrawal request has been " . $status . " successfully!";
+                header('Location: ' . $_SERVER['PHP_SELF']);
+                exit();
             } else {
                 $error = "Failed to " . $action . " the withdrawal request.";
             }
@@ -51,10 +53,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     }
 }
 
+// Get success message from session if exists
+if (isset($_SESSION['success'])) {
+    $success = $_SESSION['success'];
+    unset($_SESSION['success']);
+}
+
 // Get filter parameters
 $status_filter = isset($_GET['status']) ? sanitize_input($_GET['status']) : null;
 $start_date = isset($_GET['start_date']) ? sanitize_input($_GET['start_date']) : null;
 $end_date = isset($_GET['end_date']) ? sanitize_input($_GET['end_date']) : null;
+$search = isset($_GET['search']) ? sanitize_input($_GET['search']) : null;
 
 // Build the query for withdrawal requests
 $query = "
@@ -88,6 +97,15 @@ if ($start_date) {
 if ($end_date) {
     $query .= " AND DATE(wr.created_at) <= ?";
     $params[] = $end_date;
+}
+
+// Add search filter
+if ($search) {
+    $query .= " AND (u.full_name LIKE ? OR a.account_number LIKE ? OR wr.description LIKE ?)";
+    $search_param = "%$search%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $params[] = $search_param;
 }
 
 // Add order by
@@ -178,18 +196,19 @@ $withdrawal_requests = $stmt->fetchAll();
         
         .card {
             border: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            border-radius: 10px;
-            margin-bottom: 2rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.2);
         }
         
         .card-header {
-            background-color: white;
-            border-bottom: 1px solid #edf2f9;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            background-color: #f8f9fc;
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1.25rem;
         }
         
         .card-title {
@@ -203,27 +222,173 @@ $withdrawal_requests = $stmt->fetchAll();
         }
         
         .table {
-            color: #596882;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            margin-bottom: 1rem;
+            background-color: transparent;
         }
         
         .table th {
+            background-color: #f8f9fc;
+            border-bottom: 2px solid #e3e6f0;
+            color: #4e73df;
             font-weight: 600;
-            border-top: none;
+            padding: 1rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
         }
         
-        .btn-sm {
-            padding: 0.25rem 0.7rem;
-            font-size: 0.8rem;
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #e3e6f0;
+            transition: all 0.3s ease;
         }
         
-        .badge {
-            padding: 0.5rem 0.8rem;
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #f8f9fc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.35rem;
             font-weight: 500;
-            border-radius: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #1cc88a, #17a673);
+            border: none;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #e74a3b, #be2617);
+            border: none;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         .filters-card {
+            background: linear-gradient(135deg, #f8f9fc 0%, #e3e6f0 100%);
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #4e73df;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-select, .form-control {
+            border-radius: 0.5rem;
+            border: 1px solid #e3e6f0;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-select:focus, .form-control:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78,115,223,0.25);
+            transform: translateY(-2px);
+        }
+        
+        .search-container {
+            position: relative;
             margin-bottom: 1.5rem;
+        }
+        
+        .search-input {
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e3e6f0;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .search-input:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78,115,223,0.25);
+            transform: translateY(-2px);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus + .search-icon {
+            color: #4e73df;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 0.35rem;
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        
+        .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .alert-info {
+            background: linear-gradient(45deg, #36b9cc, #2c9faf);
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        tr[data-status="pending"] {
+            animation: pulse 2s infinite;
+        }
+        
+        @media (max-width: 768px) {
+            .table-responsive {
+                border-radius: 0.5rem;
+                box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+            }
+            
+            .btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .search-container {
+                margin-bottom: 1rem;
+            }
         }
     </style>
 </head>
@@ -283,6 +448,12 @@ $withdrawal_requests = $stmt->fetchAll();
                                 </label>
                             </div>
                         </div>
+                        <div class="col-12">
+                            <div class="search-container">
+                                <i class="bi bi-search search-icon"></i>
+                                <input type="text" class="form-control search-input" name="search" placeholder="Search by name, account number, or description..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                            </div>
+                        </div>
                         <div class="col-12 text-end">
                             <button type="submit" class="btn btn-primary"><i class="bi bi-filter"></i> Apply Filters</button>
                             <a href="withdrawals.php" class="btn btn-outline-secondary ms-2"><i class="bi bi-x-circle"></i> Clear</a>
@@ -321,8 +492,26 @@ $withdrawal_requests = $stmt->fetchAll();
                                         <tr data-status="<?php echo $request['status']; ?>" data-admin-id="<?php echo $request['admin_id']; ?>">
                                             <td>#<?php echo $request['id']; ?></td>
                                             <td><?php echo date('d M Y H:i', strtotime($request['created_at'])); ?></td>
-                                            <td><?php echo htmlspecialchars($request['user_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($request['account_number']); ?></td>
+                                            <td>
+                                                <?php 
+                                                if ($search) {
+                                                    $user_name = $request['user_name'] ?? '';
+                                                    echo preg_replace("/($search)/i", '<span class="highlight">$1</span>', htmlspecialchars($user_name));
+                                                } else {
+                                                    echo htmlspecialchars($request['user_name'] ?? '');
+                                                }
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php 
+                                                if ($search) {
+                                                    $account_number = $request['account_number'] ?? '';
+                                                    echo preg_replace("/($search)/i", '<span class="highlight">$1</span>', htmlspecialchars($account_number));
+                                                } else {
+                                                    echo htmlspecialchars($request['account_number'] ?? '');
+                                                }
+                                                ?>
+                                            </td>
                                             <td><?php echo format_currency($request['amount']); ?></td>
                                             <td><?php echo htmlspecialchars($request['admin_username']); ?>
                                                 <?php if ($request['admin_id'] == $_SESSION['admin_id']): ?>
@@ -416,5 +605,49 @@ $withdrawal_requests = $stmt->fetchAll();
     <!-- Add animate.css for subtle animation effects -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <?php endif; ?>
+    
+    <script>
+        // Enhanced real-time search functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('.search-input');
+            const form = document.querySelector('form');
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() {
+                    form.submit();
+                }, 500);
+            });
+            
+            // Add smooth scrolling to table
+            const table = document.querySelector('.table');
+            if (table) {
+                table.addEventListener('scroll', function() {
+                    const scrollTop = table.scrollTop;
+                    const scrollHeight = table.scrollHeight;
+                    const clientHeight = table.clientHeight;
+                    
+                    if (scrollTop + clientHeight >= scrollHeight - 20) {
+                        // Add loading animation or fetch more data here
+                    }
+                });
+            }
+            
+            // Add hover effect to table rows
+            const tableRows = document.querySelectorAll('.table tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.05)';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+        });
+    </script>
 </body>
 </html> 

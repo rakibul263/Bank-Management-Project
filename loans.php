@@ -46,11 +46,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apply_loan'])) {
             $stmt = $conn->prepare("INSERT INTO loans (user_id, account_id, amount, interest_rate, term_months) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([$_SESSION['user_id'], $account_id, $amount, $interest_rate, $term_months]);
             
-            $success = 'Loan application submitted successfully!';
+            $_SESSION['success'] = 'Loan application submitted successfully!';
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
         } catch (PDOException $e) {
             $error = 'Failed to submit loan application. Please try again.';
         }
     }
+}
+
+// Get success message from session if exists
+if (isset($_SESSION['success'])) {
+    $success = $_SESSION['success'];
+    unset($_SESSION['success']);
 }
 
 // Get active loans

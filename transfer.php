@@ -32,44 +32,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_transfer'])) 
     } elseif ($amount > $from_account['balance']) {
         $error = 'Insufficient funds';
     } else {
-        // Validate destination account
-        $stmt = $conn->prepare("SELECT * FROM accounts WHERE account_number = ?");
-        $stmt->execute([$to_account_number]);
-        $to_account = $stmt->fetch();
-        
-        if (!$to_account) {
-            $error = 'Invalid destination account number';
-        } else {
-            try {
-                $conn->beginTransaction();
-                
-                // Update source account
-                $stmt = $conn->prepare("UPDATE accounts SET balance = balance - ? WHERE id = ?");
-                $stmt->execute([$amount, $from_account_id]);
-                
-                // Update destination account
-                $stmt = $conn->prepare("UPDATE accounts SET balance = balance + ? WHERE id = ?");
-                $stmt->execute([$amount, $to_account['id']]);
-                
-                // Create transfer record
-                $stmt = $conn->prepare("INSERT INTO transfers (from_account_id, to_account_id, amount, status) VALUES (?, ?, ?, 'completed')");
-                $stmt->execute([$from_account_id, $to_account['id'], $amount]);
-                
-                $transfer_id = $conn->lastInsertId();
-                
-                // Create transaction records
-                $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) VALUES (?, 'transfer', ?, (SELECT balance FROM accounts WHERE id = ?), ?)");
-                $stmt->execute([$from_account_id, $amount, $from_account_id, 'Transfer to ' . $to_account_number . ($description ? ': ' . $description : '')]);
-                $stmt->execute([$to_account['id'], $amount, $to_account['id'], 'Transfer from ' . $from_account['account_number'] . ($description ? ': ' . $description : '')]);
-                
-                $conn->commit();
-                $success = 'Transfer completed successfully!';
-            } catch (Exception $e) {
-                $conn->rollBack();
+        try {
+            // Process the transfer
+            if (process_transfer($from_account_id, $to_account_number, $amount, $description)) {
+                $_SESSION['success'] = 'Transfer completed successfully!';
+                header('Location: ' . $_SERVER['PHP_SELF']);
+                exit();
+            } else {
                 $error = 'Transfer failed. Please try again.';
             }
+        } catch (PDOException $e) {
+            $error = 'An error occurred during the transfer. Please try again.';
         }
     }
+}
+
+// Get success message from session if exists
+if (isset($_SESSION['success'])) {
+    $success = $_SESSION['success'];
+    unset($_SESSION['success']);
 }
 
 // Get transfer history

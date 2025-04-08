@@ -41,11 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Create withdrawal request
         if (create_withdrawal_request($account_id, $admin_id, $amount, $description)) {
-            $success = 'Withdrawal request submitted successfully! Awaiting admin approval.';
+            $_SESSION['success'] = 'Withdrawal request submitted successfully! Awaiting admin approval.';
+            header('Location: ' . $_SERVER['PHP_SELF']);
+            exit();
         } else {
             $error = 'Failed to submit withdrawal request. Please try again.';
         }
     }
+}
+
+// Get success message from session if exists
+if (isset($_SESSION['success'])) {
+    $success = $_SESSION['success'];
+    unset($_SESSION['success']);
 }
 
 // Get user's pending withdrawal requests
