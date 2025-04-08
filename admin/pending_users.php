@@ -37,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 
                 // Add admin activity log
                 $message = "User account for {$user['full_name']} ({$user['email']}) has been approved";
-                $stmt = $conn->prepare("INSERT INTO admin_notifications (type, message, user_id, is_read) VALUES (?, ?, ?, 1)");
-                $stmt->execute(["approve_user", $message, $user_id]);
+                $stmt = $conn->prepare("INSERT INTO admin_notifications (admin_id, type, title, message, related_user_id, is_read) VALUES (?, 'user_registration', ?, ?, ?, 1)");
+                $stmt->execute([$_SESSION['admin_id'], "User Account Approved", $message, $user_id]);
                 
                 $success = "User {$user['full_name']} has been successfully approved";
             } else {
@@ -49,26 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 
                 // Delete related data first (to avoid foreign key constraints)
                 
-                // Check if admin_notifications table exists and has user_id column
-                $admin_notifications_exists = false;
-                try {
-                    $stmt = $conn->prepare("SHOW TABLES LIKE 'admin_notifications'");
-                    $stmt->execute();
-                    if ($stmt->rowCount() > 0) {
-                        $stmt = $conn->prepare("DESCRIBE admin_notifications");
-                        $stmt->execute();
-                        $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
-                        $admin_notifications_exists = in_array('user_id', $columns);
-                    }
-                } catch (PDOException $e) {
-                    // Table doesn't exist or there was an error
-                }
-                
-                // Delete any notifications related to the user if the table exists
-                if ($admin_notifications_exists) {
-                    $stmt = $conn->prepare("DELETE FROM admin_notifications WHERE user_id = ?");
-                    $stmt->execute([$user_id]);
-                }
+                // Delete any notifications related to the user
+                $stmt = $conn->prepare("DELETE FROM admin_notifications WHERE related_user_id = ?");
+                $stmt->execute([$user_id]);
                 
                 // Delete any withdrawal requests (though likely none for new user)
                 $stmt = $conn->prepare("DELETE FROM withdrawal_requests WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)");
@@ -94,10 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
                 $stmt->execute([$user_id]);
                 
-                // Add admin activity log (without user_id since user is deleted)
+                // Add admin activity log
                 $message = "User registration for {$user['full_name']} ({$user['email']}) has been rejected and removed from the system";
-                $stmt = $conn->prepare("INSERT INTO admin_notifications (type, message, is_read) VALUES (?, ?, 1)");
-                $stmt->execute(["reject_user", $message]);
+                $stmt = $conn->prepare("INSERT INTO admin_notifications (admin_id, type, title, message, is_read) VALUES (?, 'user_registration', ?, ?, 1)");
+                $stmt->execute([$_SESSION['admin_id'], "User Registration Rejected", $message]);
                 
                 $success = "User {$user['full_name']} has been rejected and removed from the system";
             }

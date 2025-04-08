@@ -19,10 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please fill in all required fields';
     } elseif (!validate_email($email)) {
         $error = 'Please enter a valid email address';
-    } elseif (!validate_password($password)) {
-        $error = 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number';
     } elseif ($password !== $confirm_password) {
         $error = 'Passwords do not match';
+    } elseif (!validate_password($password)) {
+        $error = 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number';
     } else {
         // Check if username or email already exists
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
@@ -31,23 +31,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt->rowCount() > 0) {
             $error = 'Username or email already exists';
         } else {
-            // Create user with pending approval status
-            $hashed_password = password_hash($password, PASSWORD_DEFAULT, ['cost' => HASH_COST]);
-            
             try {
                 // Start transaction
                 $conn->beginTransaction();
                 
+                // Hash password
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT, ['cost' => HASH_COST]);
+                
                 // Insert user with pending status
                 $stmt = $conn->prepare("INSERT INTO users (username, email, password, full_name, phone, address, is_approved) VALUES (?, ?, ?, ?, ?, ?, 'pending')");
-                $stmt->execute([$username, $email, $hashed_password, $full_name, $phone, $address]);
+                if (!$stmt->execute([$username, $email, $hashed_password, $full_name, $phone, $address])) {
+                    throw new PDOException('Failed to insert user');
+                }
                 
                 $user_id = $conn->lastInsertId();
                 
+                // Get admin ID (using the first admin in the system)
+                $stmt = $conn->prepare("SELECT id FROM admins LIMIT 1");
+                $stmt->execute();
+                $admin = $stmt->fetch();
+                
+                if (!$admin) {
+                    throw new PDOException('No admin found in the system');
+                }
+                
                 // Create notification for admin
+                $notification_title = "New User Registration";
                 $notification_message = "New user registration: $full_name ($email) is pending approval";
-                $stmt = $conn->prepare("INSERT INTO admin_notifications (type, message, user_id) VALUES ('registration', ?, ?)");
-                $stmt->execute([$notification_message, $user_id]);
+                $stmt = $conn->prepare("INSERT INTO admin_notifications (admin_id, type, title, message, related_user_id, is_read) VALUES (?, 'user_registration', ?, ?, ?, 0)");
+                if (!$stmt->execute([$admin['id'], $notification_title, $notification_message, $user_id])) {
+                    throw new PDOException('Failed to create notification');
+                }
                 
                 // Commit transaction
                 $conn->commit();
@@ -57,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Rollback transaction on error
                 $conn->rollBack();
                 $error = 'Registration failed. Please try again.';
+                error_log("Registration error: " . $e->getMessage());
             }
         }
     }
