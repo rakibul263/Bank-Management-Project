@@ -199,7 +199,7 @@ function format_currency($amount) {
     if ($amount === null || $amount === '') {
         $amount = 0;
     }
-    return number_format((float)$amount, 2);
+    return '৳' . number_format((float)$amount, 2);
 }
 
 function get_status_badge($status) {

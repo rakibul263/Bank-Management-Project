@@ -46,6 +46,7 @@ $account_id = isset($_GET['account_id']) ? (int)$_GET['account_id'] : null;
 $transaction_type = isset($_GET['type']) ? sanitize_input($_GET['type']) : null;
 $start_date = isset($_GET['start_date']) ? sanitize_input($_GET['start_date']) : null;
 $end_date = isset($_GET['end_date']) ? sanitize_input($_GET['end_date']) : null;
+$search = isset($_GET['search']) ? sanitize_input($_GET['search']) : null;
 
 // Build query for transactions
 $query = "
@@ -75,6 +76,14 @@ if ($start_date) {
 if ($end_date) {
     $query .= " AND DATE(t.created_at) <= ?";
     $params[] = $end_date;
+}
+
+if ($search) {
+    $query .= " AND (u.full_name LIKE ? OR a.account_number LIKE ? OR t.description LIKE ?)";
+    $search_param = "%$search%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+    $params[] = $search_param;
 }
 
 $query .= " ORDER BY t.created_at DESC";
@@ -422,6 +431,51 @@ $transaction_types = ['deposit', 'withdrawal', 'transfer', 'loan'];
                 padding: 0.75rem 1rem;
             }
         }
+        
+        /* Search Bar Styles */
+        .input-group {
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 0.5rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group:focus-within {
+            box-shadow: 0 4px 15px rgba(78,115,223,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .input-group-text {
+            border: none;
+            background: linear-gradient(45deg, var(--primary-color), #6f42c1);
+            color: white;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group-text:hover {
+            background: linear-gradient(45deg, #6f42c1, var(--primary-color));
+        }
+        
+        .form-control {
+            border: none;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            box-shadow: none;
+            border-color: transparent;
+        }
+        
+        /* Search Results Highlight */
+        .highlight {
+            background-color: rgba(78,115,223,0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -453,6 +507,18 @@ $transaction_types = ['deposit', 'withdrawal', 'transfer', 'loan'];
             </div>
             <div class="card-body">
                 <form method="GET" action="" class="row g-3">
+                    <div class="col-md-12 mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-primary text-white">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" class="form-control" id="search" name="search" placeholder="Search by account holder, account number, or description..." value="<?php echo htmlspecialchars($search ?? ''); ?>">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="col-md-3">
                         <label for="account_id" class="form-label">Account</label>
                         <select class="form-select" id="account_id" name="account_id">
@@ -539,10 +605,10 @@ $transaction_types = ['deposit', 'withdrawal', 'transfer', 'loan'];
                                     <td>
                                         <span class="transaction-amount <?php echo $transaction['transaction_type'] === 'deposit' ? 'positive' : 'negative'; ?>">
                                             <?php echo $transaction['transaction_type'] === 'deposit' ? '+' : '-'; ?>
-                                            $<?php echo format_currency($transaction['amount']); ?>
+                                            <?php echo format_currency($transaction['amount']); ?>
                                         </span>
                                     </td>
-                                    <td>$<?php echo format_currency($transaction['balance_after']); ?></td>
+                                    <td><?php echo format_currency($transaction['balance_after']); ?></td>
                                     <td class="transaction-details">
                                         <?php echo htmlspecialchars($transaction['description']); ?>
                                     </td>
@@ -557,5 +623,31 @@ $transaction_types = ['deposit', 'withdrawal', 'transfer', 'loan'];
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search');
+        const searchForm = document.querySelector('form');
+        
+        // Add debounce to search
+        let debounceTimer;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                searchForm.submit();
+            }, 500);
+        });
+        
+        // Highlight search results
+        const searchTerm = '<?php echo $search ?? ''; ?>';
+        if (searchTerm) {
+            const rows = document.querySelectorAll('.transaction-details');
+            rows.forEach(row => {
+                const text = row.textContent;
+                const regex = new RegExp(searchTerm, 'gi');
+                row.innerHTML = text.replace(regex, match => `<span class="highlight">${match}</span>`);
+            });
+        }
+    });
+    </script>
 </body>
 </html> 

@@ -325,7 +325,7 @@ $accounts = $stmt->fetchAll();
                                     <option value="">Choose an account</option>
                                     <?php foreach ($accounts as $account): ?>
                                         <option value="<?php echo $account['id']; ?>">
-                                            <?php echo $account['account_number']; ?> (<?php echo ucfirst($account['account_type']); ?>) - $<?php echo format_currency($account['balance']); ?>
+                                            <?php echo $account['account_number']; ?> (<?php echo ucfirst($account['account_type']); ?>) - <?php echo format_currency($account['balance']); ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>

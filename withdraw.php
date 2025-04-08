@@ -404,7 +404,7 @@ $withdrawal_requests = $stmt->fetchAll();
                                     <div class="mb-3">
                                         <label for="amount" class="form-label">Amount</label>
                                         <div class="input-group">
-                                            <span class="input-group-text">$</span>
+                                            <span class="input-group-text">৳</span>
                                             <input type="number" step="0.01" min="0.01" name="amount" id="amount" class="form-control" required placeholder="0.00">
                                         </div>
                                     </div>
@@ -446,7 +446,7 @@ $withdrawal_requests = $stmt->fetchAll();
                                                 <tr>
                                                     <td><?php echo date('d M Y', strtotime($request['created_at'])); ?></td>
                                                     <td><?php echo $request['account_number']; ?></td>
-                                                    <td>$<?php echo format_currency($request['amount']); ?></td>
+                                                    <td><?php echo format_currency($request['amount']); ?></td>
                                                     <td>
                                                         <div class="admin-name">
                                                             <div class="avatar">

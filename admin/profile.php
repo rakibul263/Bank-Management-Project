@@ -605,7 +605,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                                         </small>
                                                     </div>
                                                     <p class="mb-1">
-                                                        Amount: $<?php echo number_format($withdrawal['amount'], 2); ?> - 
+                                                        Amount: <?php echo format_currency($withdrawal['amount']); ?> - 
                                                         <?php 
                                                             $status_class = $withdrawal['status'] === 'approved' ? 'success' : 'danger';
                                                             echo '<span class="badge bg-' . $status_class . '">' . ucfirst($withdrawal['status']) . '</span>';
@@ -636,7 +636,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                                         </small>
                                                     </div>
                                                     <p class="mb-1">
-                                                        Amount: $<?php echo number_format($loan['amount'], 2); ?> - 
+                                                        Amount: <?php echo format_currency($loan['amount']); ?> - 
                                                         <?php 
                                                             $status_class = $loan['status'] === 'approved' ? 'success' : 'danger';
                                                             echo '<span class="badge bg-' . $status_class . '">' . ucfirst($loan['status']) . '</span>';

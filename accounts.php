@@ -403,8 +403,8 @@ $accounts = $stmt->fetchAll();
                                 <div>
                                     <h5 class="card-title"><?php echo ucfirst($account['account_type']); ?> Account</h5>
                                     <p class="card-text text-muted"><?php echo $account['account_number']; ?></p>
-                                    <div class="account-balance">
-                                        $<?php echo format_currency($account['balance']); ?>
+                                    <div class="account-balance mb-3">
+                                        <?php echo format_currency($account['balance']); ?>
                                     </div>
                                     <div class="mt-2">
                                         <?php echo get_status_badge($account['status']); ?>
@@ -449,6 +449,10 @@ $accounts = $stmt->fetchAll();
                                 <option value="savings">Savings Account</option>
                                 <option value="current">Current Account</option>
                             </select>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text">৳</span>
+                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="1000" max="50000" required>
                         </div>
                     </div>
                     <div class="modal-footer">

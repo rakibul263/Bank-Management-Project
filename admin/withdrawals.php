@@ -323,7 +323,7 @@ $withdrawal_requests = $stmt->fetchAll();
                                             <td><?php echo date('d M Y H:i', strtotime($request['created_at'])); ?></td>
                                             <td><?php echo htmlspecialchars($request['user_name']); ?></td>
                                             <td><?php echo htmlspecialchars($request['account_number']); ?></td>
-                                            <td>$<?php echo format_currency($request['amount']); ?></td>
+                                            <td><?php echo format_currency($request['amount']); ?></td>
                                             <td><?php echo htmlspecialchars($request['admin_username']); ?>
                                                 <?php if ($request['admin_id'] == $_SESSION['admin_id']): ?>
                                                     <span class="badge bg-info">You</span>

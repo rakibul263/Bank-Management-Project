@@ -85,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
             $error = "Cannot delete user <strong>" . htmlspecialchars($user_details['full_name']) . "</strong> because they have accounts with balance:<ul>";
             
             foreach ($accounts_with_balance as $account) {
-                $error .= "<li>Account #" . htmlspecialchars($account['account_number']) . " (" . ucfirst($account['account_type']) . ") - Balance: $" . format_currency($account['balance']) . "</li>";
+                $error .= "<li>Account #" . htmlspecialchars($account['account_number']) . " (" . ucfirst($account['account_type']) . ") - Balance: " . format_currency($account['balance']) . "</li>";
             }
             
             $error .= "</ul><div class='mt-3'><a href='?view=" . $user_id . "' class='btn btn-sm btn-info'><i class='bi bi-info-circle'></i> View User Details</a></div>";
@@ -278,6 +278,24 @@ $users = $stmt->fetchAll();
             color: white;
             padding: 1.25rem 1.5rem;
             border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover .card-header::after {
+            transform: translateX(100%);
         }
         
         .card-header h5 {
@@ -300,6 +318,7 @@ $users = $stmt->fetchAll();
             font-size: 0.8rem;
             letter-spacing: 0.05em;
             padding: 1rem;
+            transition: all 0.3s ease;
         }
         
         .table td {
@@ -308,10 +327,21 @@ $users = $stmt->fetchAll();
             font-size: 0.9rem;
             padding: 1rem;
             border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .table tr {
+            transition: all 0.3s ease;
         }
         
         .table tr:hover {
             background: rgba(78,115,223,0.02);
+            transform: translateX(5px);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .table tr:hover td {
+            color: var(--primary-color);
         }
         
         /* Button Styles */
@@ -323,10 +353,29 @@ $users = $stmt->fetchAll();
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover::after {
+            transform: translateX(0);
         }
         
         .btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         
         .btn-primary {
@@ -556,7 +605,7 @@ $users = $stmt->fetchAll();
                                             <tr>
                                                 <td><?php echo $account['account_number']; ?></td>
                                                 <td><?php echo ucfirst($account['account_type']); ?></td>
-                                                <td>$<?php echo format_currency($account['balance']); ?></td>
+                                                <td><?php echo format_currency($account['balance']); ?></td>
                                                 <td>
                                                     <span class="status-badge <?php echo $account['status']; ?>">
                                                         <?php echo ucfirst($account['status']); ?>
@@ -590,7 +639,7 @@ $users = $stmt->fetchAll();
                                     <tbody>
                                         <?php foreach ($user_loans as $loan): ?>
                                         <tr>
-                                            <td>$<?php echo format_currency($loan['amount']); ?></td>
+                                            <td><?php echo format_currency($loan['amount']); ?></td>
                                             <td><?php echo $loan['interest_rate']; ?>%</td>
                                             <td><?php echo $loan['term_months']; ?> months</td>
                                             <td>

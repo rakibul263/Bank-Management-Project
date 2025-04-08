@@ -409,7 +409,7 @@ $loan_history = $stmt->fetchAll();
                                     <h5 class="mb-0">Loan #<?php echo $loan['id']; ?></h5>
                                     <?php echo get_status_badge($loan['status']); ?>
                                 </div>
-                                <div class="amount mb-3">$<?php echo format_currency($loan['amount']); ?></div>
+                                <div class="amount mb-3"><?php echo format_currency($loan['amount']); ?></div>
                                 <div class="info-row">
                                     <div class="info-item">
                                         <div class="info-label">Interest Rate</div>
@@ -429,7 +429,7 @@ $loan_history = $stmt->fetchAll();
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
                                                 <div class="info-label">Monthly Payment</div>
-                                                <div class="info-value text-primary">$<?php echo format_currency($loan['monthly_payment']); ?></div>
+                                                <div class="info-value text-primary"><?php echo format_currency($loan['monthly_payment']); ?></div>
                                             </div>
                                             <button class="btn btn-sm btn-outline-primary">View Details</button>
                                         </div>
@@ -481,7 +481,7 @@ $loan_history = $stmt->fetchAll();
                         <div class="mb-3">
                             <label for="amount" class="form-label">Loan Amount</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="1000" max="50000" required>
                             </div>
                         </div>

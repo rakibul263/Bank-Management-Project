@@ -587,7 +587,7 @@ $transactions = $stmt->fetchAll();
                                 <div class="text-end">
                                     <span class="transaction-amount <?php echo $transaction['transaction_type'] === 'deposit' ? 'deposit' : 'withdraw'; ?>">
                                         <?php echo $transaction['transaction_type'] === 'deposit' ? '+' : '-'; ?>
-                                        ৳<?php echo format_currency($transaction['amount']); ?>
+                                        <?php echo format_currency($transaction['amount']); ?>
                                     </span>
                                     <br>
                                     <small class="transaction-date">

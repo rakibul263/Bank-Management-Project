@@ -271,11 +271,11 @@ header('Content-Type: text/html; charset=utf-8');
             </div>
             <div class="info-row">
                 <div class="info-label">Opening Balance:</div>
-                <div class="info-value">$<?php echo format_currency($opening_balance); ?></div>
+                <div class="info-value"><?php echo format_currency($opening_balance); ?></div>
             </div>
             <div class="info-row">
                 <div class="info-label">Closing Balance:</div>
-                <div class="info-value">$<?php echo format_currency($closing_balance); ?></div>
+                <div class="info-value"><?php echo format_currency($closing_balance); ?></div>
             </div>
             <div class="info-row">
                 <div class="info-label">Statement Period:</div>
@@ -288,11 +288,11 @@ header('Content-Type: text/html; charset=utf-8');
             <div class="summary-box">
                 <div class="info-row">
                     <div class="info-label">Total Deposits:</div>
-                    <div class="info-value amount-positive">$<?php echo format_currency($deposits); ?></div>
+                    <div class="info-value amount-positive"><?php echo format_currency($deposits); ?></div>
                 </div>
                 <div class="info-row">
                     <div class="info-label">Total Withdrawals:</div>
-                    <div class="info-value amount-negative">$<?php echo format_currency($withdrawals); ?></div>
+                    <div class="info-value amount-negative"><?php echo format_currency($withdrawals); ?></div>
                 </div>
             </div>
         </div>
@@ -315,7 +315,7 @@ header('Content-Type: text/html; charset=utf-8');
                         <td>Opening Balance</td>
                         <td></td>
                         <td></td>
-                        <td>$<?php echo format_currency($opening_balance); ?></td>
+                        <td><?php echo format_currency($opening_balance); ?></td>
                     </tr>
                     
                     <?php 
@@ -325,12 +325,12 @@ header('Content-Type: text/html; charset=utf-8');
                             $current_balance += $transaction['amount'];
                             $type = 'Deposit';
                             $amount_class = 'amount-positive';
-                            $amount_display = '+$'.format_currency($transaction['amount']);
+                            $amount_display = '+' . format_currency($transaction['amount']);
                         } else {
                             $current_balance -= $transaction['amount'];
                             $type = 'Withdrawal';
                             $amount_class = 'amount-negative';
-                            $amount_display = '-$'.format_currency($transaction['amount']);
+                            $amount_display = '-' . format_currency($transaction['amount']);
                         }
                     ?>
                     <tr>
@@ -338,7 +338,7 @@ header('Content-Type: text/html; charset=utf-8');
                         <td><?php echo $transaction['description'] ? htmlspecialchars($transaction['description']) : $type; ?></td>
                         <td><?php echo $type; ?></td>
                         <td class="<?php echo $amount_class; ?>"><?php echo $amount_display; ?></td>
-                        <td>$<?php echo format_currency($current_balance); ?></td>
+                        <td><?php echo format_currency($current_balance); ?></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>

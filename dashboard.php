@@ -328,7 +328,7 @@ $active_loans = $stmt->fetchAll();
                         </div>
                         <p class="card-text text-muted"><?php echo $account['account_number']; ?></p>
                         <div class="account-balance mb-3">
-                            $<?php echo format_currency($account['balance']); ?>
+                            <?php echo format_currency($account['balance']); ?>
                         </div>
                         <a href="transactions.php?account=<?php echo $account['id']; ?>" class="btn btn-sm btn-outline-primary">
                             <i class="bi bi-list-ul me-1"></i> View Transactions
@@ -371,7 +371,7 @@ $active_loans = $stmt->fetchAll();
                                     <div class="text-end">
                                         <div class="fw-bold <?php echo $transaction['transaction_type'] === 'deposit' ? 'text-success' : 'text-danger'; ?>">
                                             <?php echo $transaction['transaction_type'] === 'deposit' ? '+' : '-'; ?>
-                                            $<?php echo format_currency($transaction['amount']); ?>
+                                            <?php echo format_currency($transaction['amount']); ?>
                                         </div>
                                         <small class="text-muted">
                                             <?php echo date('M d, Y H:i', strtotime($transaction['created_at'])); ?>
@@ -401,7 +401,7 @@ $active_loans = $stmt->fetchAll();
                         <?php else: ?>
                             <?php foreach ($active_loans as $loan): ?>
                             <div class="mb-3 p-3 border rounded">
-                                <h6>$<?php echo format_currency($loan['amount']); ?></h6>
+                                <h6><?php echo format_currency($loan['amount']); ?></h6>
                                 <div class="row mt-2">
                                     <div class="col-6">
                                         <small class="text-muted d-block">Interest Rate</small>

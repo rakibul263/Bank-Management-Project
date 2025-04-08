@@ -410,7 +410,7 @@ $transfers = $stmt->fetchAll();
                                 </div>
                                 <div class="text-end">
                                     <div class="text-danger">
-                                        -$<?php echo format_currency($transfer['amount']); ?>
+                                        -<?php echo format_currency($transfer['amount']); ?>
                                     </div>
                                     <small class="text-muted">
                                         <?php echo date('M d, Y H:i', strtotime($transfer['created_at'])); ?>
@@ -444,7 +444,7 @@ $transfers = $stmt->fetchAll();
                                 <option value="">Select account</option>
                                 <?php foreach ($accounts as $account): ?>
                                     <option value="<?php echo $account['id']; ?>">
-                                        <?php echo $account['account_number']; ?> (<?php echo ucfirst($account['account_type']); ?>) - $<?php echo format_currency($account['balance']); ?>
+                                        <?php echo $account['account_number']; ?> (<?php echo ucfirst($account['account_type']); ?>) - <?php echo format_currency($account['balance']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -458,7 +458,7 @@ $transfers = $stmt->fetchAll();
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount</label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
+                                <span class="input-group-text">৳</span>
                                 <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0.01" required>
                             </div>
                         </div>

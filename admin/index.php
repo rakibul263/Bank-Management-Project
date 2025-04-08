@@ -421,7 +421,7 @@ $pending_loans = $stmt->fetchAll();
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Balance</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($stats['total_balance'], 2); ?></div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo format_currency($stats['total_balance']); ?></div>
                             </div>
                             <div class="text-info"><i class="bi bi-cash-stack fa-2x"></i></div>
                         </div>
@@ -436,7 +436,7 @@ $pending_loans = $stmt->fetchAll();
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Total Loans</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">$<?php echo number_format($stats['total_loans'], 2); ?></div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800"><?php echo format_currency($stats['total_loans']); ?></div>
                                 <div class="text-xs text-muted"><?php echo $stats['pending_loans']; ?> pending</div>
                             </div>
                             <div class="text-warning"><i class="bi bi-credit-card fa-2x"></i></div>
@@ -522,7 +522,7 @@ $pending_loans = $stmt->fetchAll();
                                                 <?php echo htmlspecialchars($loan['full_name']); ?>
                                             </div>
                                         </td>
-                                        <td class="fw-bold text-success">$<?php echo number_format($loan['amount']); ?></td>
+                                        <td class="fw-bold text-success"><?php echo format_currency($loan['amount']); ?></td>
                                         <td><span class="badge bg-light text-dark"><?php echo $loan['account_number']; ?></span></td>
                                         <td><?php echo date('M d, Y', strtotime($loan['created_at'])); ?></td>
                                         <td>
