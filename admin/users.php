@@ -116,10 +116,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_user'])) {
             $conn->beginTransaction();
             
             // Delete any notifications related to the user first (foreign key constraint)
-            if ($admin_notifications_exists) {
-                $stmt = $conn->prepare("DELETE FROM admin_notifications WHERE user_id = ?");
-                $stmt->execute([$user_id]);
-            }
+            $stmt = $conn->prepare("DELETE FROM admin_notifications WHERE related_user_id = ?");
+            $stmt->execute([$user_id]);
             
             // Delete from withdrawal_requests
             $stmt = $conn->prepare("DELETE FROM withdrawal_requests WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)");

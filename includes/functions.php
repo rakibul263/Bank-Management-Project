@@ -81,14 +81,13 @@ function create_transaction($account_id, $type, $amount, $description = '') {
             $new_balance = $current_balance - $amount;
         }
         
+        // First update the account balance
+        $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
+        $stmt->execute([$new_balance, $account_id]);
+        
+        // Then create the transaction record
         $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)");
         $stmt->execute([$account_id, $type, $amount, $new_balance, $description]);
-        
-        // Only update the account balance if not already updated in loan processing
-        if ($type !== 'loan') {
-            $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
-            $stmt->execute([$new_balance, $account_id]);
-        }
         
         $conn->commit();
         return true;

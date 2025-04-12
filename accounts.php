@@ -450,10 +450,6 @@ $accounts = $stmt->fetchAll();
                                 <option value="current">Current Account</option>
                             </select>
                         </div>
-                        <div class="input-group">
-                            <span class="input-group-text">৳</span>
-                            <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="1000" max="50000" required>
-                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
