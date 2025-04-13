@@ -97,6 +97,113 @@ function create_transaction($account_id, $type, $amount, $description = '') {
     }
 }
 
+function process_transfer($from_account_id, $to_account_number, $amount, $description = '') {
+    global $conn;
+    try {
+        $conn->beginTransaction();
+        
+        // Validate amount
+        if ($amount <= 0) {
+            error_log("Invalid amount: {$amount}");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Get source account details
+        $stmt = $conn->prepare("SELECT * FROM accounts WHERE id = ? AND status = 'active'");
+        $stmt->execute([$from_account_id]);
+        $from_account = $stmt->fetch();
+        
+        if (!$from_account) {
+            error_log("Source account not found or inactive: {$from_account_id}");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Get destination account details
+        $stmt = $conn->prepare("SELECT * FROM accounts WHERE account_number = ? AND status = 'active'");
+        $stmt->execute([$to_account_number]);
+        $to_account = $stmt->fetch();
+        
+        if (!$to_account) {
+            error_log("Destination account not found or inactive: {$to_account_number}");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Check if source account has sufficient funds
+        if ($from_account['balance'] < $amount) {
+            error_log("Insufficient funds in account {$from_account_id}. Balance: {$from_account['balance']}, Amount: {$amount}");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Update source account balance
+        $new_from_balance = $from_account['balance'] - $amount;
+        $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
+        if (!$stmt->execute([$new_from_balance, $from_account_id])) {
+            error_log("Failed to update source account balance");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Update destination account balance
+        $new_to_balance = $to_account['balance'] + $amount;
+        $stmt = $conn->prepare("UPDATE accounts SET balance = ? WHERE id = ?");
+        if (!$stmt->execute([$new_to_balance, $to_account['id']])) {
+            error_log("Failed to update destination account balance");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Create transfer record
+        $stmt = $conn->prepare("INSERT INTO transfers (from_account_id, to_account_id, amount, status) 
+                               VALUES (?, ?, ?, 'completed')");
+        if (!$stmt->execute([$from_account_id, $to_account['id'], $amount])) {
+            error_log("Failed to create transfer record");
+            $conn->rollBack();
+            return false;
+        }
+        $transfer_id = $conn->lastInsertId();
+        
+        // Create transaction record for source account
+        $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description, status) 
+                               VALUES (?, 'transfer_out', ?, ?, ?, 'completed')");
+        if (!$stmt->execute([
+            $from_account_id, 
+            $amount, 
+            $new_from_balance, 
+            "Transfer #{$transfer_id} to {$to_account_number}: {$description}"
+        ])) {
+            error_log("Failed to create source transaction record");
+            $conn->rollBack();
+            return false;
+        }
+        
+        // Create transaction record for destination account
+        $stmt = $conn->prepare("INSERT INTO transactions (account_id, transaction_type, amount, balance_after, description, status) 
+                               VALUES (?, 'transfer_in', ?, ?, ?, 'completed')");
+        if (!$stmt->execute([
+            $to_account['id'], 
+            $amount, 
+            $new_to_balance, 
+            "Transfer #{$transfer_id} from {$from_account['account_number']}: {$description}"
+        ])) {
+            error_log("Failed to create destination transaction record");
+            $conn->rollBack();
+            return false;
+        }
+        
+        $conn->commit();
+        return true;
+    } catch (Exception $e) {
+        $conn->rollBack();
+        error_log("Transfer failed: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        return false;
+    }
+}
+
 // Withdrawal request functions
 function create_withdrawal_request($account_id, $admin_id, $amount, $description = '') {
     global $conn;

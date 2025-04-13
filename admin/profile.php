@@ -643,7 +643,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
                                                         ?>
                                                     </p>
                                                     <small class="text-muted">
-                                                        Term: <?php echo $loan['term']; ?> months
+                                                        Term: <?php echo $loan['term_months']; ?> months
                                                         <?php if (isset($loan['interest_rate'])): ?>
                                                             - Interest Rate: <?php echo $loan['interest_rate']; ?>%
                                                         <?php endif; ?>

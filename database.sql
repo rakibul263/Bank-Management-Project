@@ -32,7 +32,7 @@ CREATE TABLE accounts (
 CREATE TABLE transactions (
     id INT PRIMARY KEY AUTO_INCREMENT,
     account_id INT NOT NULL,
-    transaction_type ENUM('deposit', 'withdrawal', 'transfer', 'loan') NOT NULL,
+    transaction_type ENUM('deposit', 'withdrawal', 'transfer_in', 'transfer_out', 'loan') NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     balance_after DECIMAL(15,2) NOT NULL,
     description TEXT,

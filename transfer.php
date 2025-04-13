@@ -20,29 +20,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['process_transfer'])) 
     $amount = (float)$_POST['amount'];
     $description = sanitize_input($_POST['description']);
     
-    // Validate source account
-    $stmt = $conn->prepare("SELECT * FROM accounts WHERE id = ? AND user_id = ?");
-    $stmt->execute([$from_account_id, $_SESSION['user_id']]);
-    $from_account = $stmt->fetch();
-    
-    if (!$from_account) {
-        $error = 'Invalid source account';
-    } elseif ($amount <= 0) {
-        $error = 'Amount must be greater than 0';
-    } elseif ($amount > $from_account['balance']) {
-        $error = 'Insufficient funds';
+    // Validate inputs
+    if (empty($from_account_id)) {
+        $error = 'Please select a source account';
+    } elseif (empty($to_account_number)) {
+        $error = 'Please enter destination account number';
+    } elseif (empty($amount) || $amount <= 0) {
+        $error = 'Please enter a valid amount';
     } else {
-        try {
-            // Process the transfer
-            if (process_transfer($from_account_id, $to_account_number, $amount, $description)) {
-                $_SESSION['success'] = 'Transfer completed successfully!';
-                header('Location: ' . $_SERVER['PHP_SELF']);
-                exit();
-            } else {
-                $error = 'Transfer failed. Please try again.';
+        // Validate source account
+        $stmt = $conn->prepare("SELECT * FROM accounts WHERE id = ? AND user_id = ? AND status = 'active'");
+        $stmt->execute([$from_account_id, $_SESSION['user_id']]);
+        $from_account = $stmt->fetch();
+        
+        if (!$from_account) {
+            $error = 'Invalid or inactive source account';
+        } elseif ($amount > $from_account['balance']) {
+            $error = 'Insufficient funds';
+        } else {
+            try {
+                // Process the transfer
+                if (process_transfer($from_account_id, $to_account_number, $amount, $description)) {
+                    $_SESSION['success'] = 'Transfer completed successfully!';
+                    header('Location: ' . $_SERVER['PHP_SELF']);
+                    exit();
+                } else {
+                    $error = 'Transfer failed. Please try again.';
+                }
+            } catch (PDOException $e) {
+                error_log("Transfer error: " . $e->getMessage());
+                $error = 'An error occurred during the transfer. Please try again.';
             }
-        } catch (PDOException $e) {
-            $error = 'An error occurred during the transfer. Please try again.';
         }
     }
 }
